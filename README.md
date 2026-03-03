@@ -1,6 +1,6 @@
 # 🎙️ AI Voice Agent — Mission Control Console
 
-![A screenshot or mockup of your dark-themed "Mission Control" UI would look perfect here.](app/static/screenshot.png)
+![AI Voice Agent Interface Screenshot](assets/interface.PNG)
 
 A production-ready, ultra-low latency, conversational AI Voice Agent designed to simulate an automated customer service representative for an HVAC & Plumbing company. Built to demonstrate a complete, robust system architecture (Speech-to-Text → LLM inference → Text-to-Speech) using high-performance, free-tier APIs.
 
@@ -34,7 +34,7 @@ You will need Python 3.9+ and valid free API keys from:
 ### 1. Clone & Install Dependencies
 
 ```bash
-git clone https://github.com/your-username/voice-agent-mission-control.git
+git clone https://github.com/Abdullah-Zafarr/Customer-Support-Voice-Agent-.git
 cd voice-agent-mission-control
 
 # Create and activate a virtual environment
