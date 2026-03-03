@@ -23,6 +23,28 @@ A production-ready, ultra-low latency, conversational AI Voice Agent designed to
   - `groq` (Llama 3.3) for intelligence and tool calling.
   - `deepgram-sdk` for STT listener and TTS chunked streaming.
 
+## 📂 Project Structure
+
+```text
+.
+├── app/
+│   ├── static/               # Frontend assets
+│   │   ├── index.html        # Main dashboard UI
+│   │   ├── script.js         # Audio capture & WebSocket logic
+│   │   └── style.css         # Cyberpunk styling
+│   ├── agent.py              # LLM logic & tool definitions
+│   ├── config.py             # Environment configuration
+│   ├── database.py           # SQLAlchemy models & DB setup
+│   ├── deepgram_client.py    # STT/TTS client integration
+│   ├── logger.py             # Server-side logging
+│   ├── main.py               # FastAPI app initialization
+│   └── websocket.py          # Real-time streaming handler
+├── assets/                   # Documentation images (interface screenshot)
+├── main.py                   # Application entry point
+├── requirements.txt          # Python dependencies
+└── .env                      # API keys (not committed)
+```
+
 ## 🚀 Getting Started
 
 ### Prerequisites
