@@ -3,7 +3,7 @@ import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import List, Dict, Any
 
-from .deepgram_client import setup_stt, get_tts_stream
+from .whisper_client import setup_stt, get_tts_stream
 from .agent import process_llm_turn
 from .logger import logger
 
@@ -58,7 +58,7 @@ async def websocket_endpoint(websocket: WebSocket):
             # Send agent text response to frontend for Live Transcript
             await websocket.send_json({"type": "response", "text": llm_response})
             
-            # Stream TTS chunks to client
+            # Stream TTS chunks to client (Edge TTS produces MP3 chunks)
             async for audio_chunk in get_tts_stream(llm_response):
                 await websocket.send_bytes(audio_chunk)
                 
@@ -69,21 +69,24 @@ async def websocket_endpoint(websocket: WebSocket):
             logger.info("TTS generation aborted due to barge-in.")
         except Exception as e:
             logger.error(f"Error in LLM/TTS logic: {e}")
-            await websocket.send_json({"type": "error", "text": str(e)})
+            try:
+                await websocket.send_json({"type": "error", "text": str(e)})
+            except Exception:
+                pass  # WebSocket may already be closed
 
-    # Initialize STT with Deepgram
-    stt_connection = await setup_stt(on_transcript)
-    if not stt_connection:
-        await websocket.close(code=1011, reason="Failed to connect to Deepgram STT")
+    # Initialize STT with Whisper
+    stt_buffer = await setup_stt(on_transcript)
+    if not stt_buffer:
+        await websocket.close(code=1011, reason="Failed to initialize Whisper STT")
         return
 
     try:
         while True:
             data = await websocket.receive()
             if "bytes" in data:
-                # Raw audio chunk received from client, pass to Deepgram STT
+                # Raw audio chunk received from client, pass to Whisper audio buffer
                 audio_data = data["bytes"]
-                await stt_connection.send(audio_data)
+                await stt_buffer.add_chunk(audio_data)
             elif "text" in data:
                 # Control messages or greetings
                 text_msg = json.loads(data["text"])
@@ -95,5 +98,3 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.info("Client disconnected gracefully.")
     except Exception as e:
         logger.error(f"WebSocket Error: {e}")
-    finally:
-        await stt_connection.finish()

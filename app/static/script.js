@@ -173,7 +173,7 @@ function updateSystemStatus(state) {
 
     // STT
     sttDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.LISTENING ? 'active' :
-            isActive ? 'active' : ''
+        isActive ? 'active' : ''
         }`;
     sttDot.style.backgroundColor = state === STATE.LISTENING ? '#00FFFF' :
         isActive ? '#00E676' : '';
@@ -183,7 +183,7 @@ function updateSystemStatus(state) {
 
     // LLM
     llmDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.PROCESSING ? 'warning' :
-            isActive ? 'active' : ''
+        isActive ? 'active' : ''
         }`;
     llmDot.style.backgroundColor = state === STATE.PROCESSING ? '#FFB300' :
         isActive ? '#00E676' : '';
@@ -193,7 +193,7 @@ function updateSystemStatus(state) {
 
     // TTS
     ttsDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.SPEAKING ? 'active' :
-            isActive ? 'active' : ''
+        isActive ? 'active' : ''
         }`;
     ttsDot.style.backgroundColor = state === STATE.SPEAKING ? '#00E676' :
         isActive ? '#00E676' : '';
@@ -287,59 +287,52 @@ function stopSessionTimer() {
 
 // ─── AUDIO PLAYBACK ───
 let playbackAudioContext = null;
+let nextStartTime = 0;
 
-async function playAudioChunk(audioData) {
+async function processPCMChunk(pcmData) {
     if (!playbackAudioContext) {
-        playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
-        // Connect analyser for waveform visualization during playback
-        const playbackAnalyser = playbackAudioContext.createAnalyser();
-        playbackAnalyser.fftSize = 256;
-        playbackAnalyser.connect(playbackAudioContext.destination);
+        playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        nextStartTime = playbackAudioContext.currentTime;
     }
 
-    audioQueue.push(audioData);
+    // Convert PCM16 to Float32
+    const int16Array = new Int16Array(pcmData.buffer);
+    const float32Array = new Float32Array(int16Array.length);
+    for (let i = 0; i < int16Array.length; i++) {
+        float32Array[i] = int16Array[i] / 32768.0;
+    }
+
+    // Create Buffer
+    const buffer = playbackAudioContext.createBuffer(1, float32Array.length, 24000);
+    buffer.getChannelData(0).set(float32Array);
+
+    const source = playbackAudioContext.createBufferSource();
+    source.buffer = buffer;
+
+    // Visualizer connection
+    const playAnalyser = playbackAudioContext.createAnalyser();
+    playAnalyser.fftSize = 256;
+    source.connect(playAnalyser);
+    playAnalyser.connect(playbackAudioContext.destination);
+
+    // Track state for visualizer
+    analyser = playAnalyser;
+    waveformData = new Float32Array(256);
+
+    // Schedule perfectly to avoid clicks
+    const startTime = Math.max(nextStartTime, playbackAudioContext.currentTime);
+    source.start(startTime);
+    nextStartTime = startTime + buffer.duration;
+
     if (!isPlayingAudio) {
-        processAudioQueue();
-    }
-}
-
-async function processAudioQueue() {
-    if (audioQueue.length === 0) {
-        isPlayingAudio = false;
-        return;
-    }
-
-    isPlayingAudio = true;
-    const data = audioQueue.shift();
-
-    try {
-        const audioBuffer = await playbackAudioContext.decodeAudioData(data.buffer.slice(0));
-        const source = playbackAudioContext.createBufferSource();
-
-        // Connect through analyser for waveform viz
-        const playAnalyser = playbackAudioContext.createAnalyser();
-        playAnalyser.fftSize = 256;
-        source.connect(playAnalyser);
-        playAnalyser.connect(playbackAudioContext.destination);
-
-        // Use this analyser for waveform
-        analyser = playAnalyser;
-        waveformData = new Float32Array(playAnalyser.fftSize);
-
-        source.buffer = audioBuffer;
-        source.onended = () => {
-            processAudioQueue();
-        };
-        source.start();
-    } catch (e) {
-        // If one chunk fails, try the next
-        processAudioQueue();
+        isPlayingAudio = true;
     }
 }
 
 function clearAudioQueue() {
     audioQueue = [];
     isPlayingAudio = false;
+    nextStartTime = 0;
 }
 
 // ─── WEBSOCKET ───
@@ -410,16 +403,18 @@ async function startCall() {
 
         ws.onmessage = async (event) => {
             if (event.data instanceof Blob) {
-                // Audio data from TTS
+                // Audio data from TTS — process raw PCM chunk instantly
                 setState(STATE.SPEAKING);
                 const arrayBuffer = await event.data.arrayBuffer();
-                playAudioChunk(new Uint8Array(arrayBuffer));
+                processPCMChunk(new Uint8Array(arrayBuffer));
             } else {
                 // JSON control messages
                 try {
                     const msg = JSON.parse(event.data);
 
                     if (msg.type === 'tts_complete') {
+                        // Reset speaker state when stream finishes
+                        isPlayingAudio = false;
                         setState(STATE.LISTENING);
                     } else if (msg.type === 'clear_audio') {
                         clearAudioQueue();

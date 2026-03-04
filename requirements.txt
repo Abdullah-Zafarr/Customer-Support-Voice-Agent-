@@ -2,9 +2,11 @@ fastapi
 uvicorn
 websockets==12.0
 groq
-deepgram-sdk==3.4.0
 python-dotenv
 sqlalchemy
 pydantic
 pydantic-settings
 httpx
+faster-whisper
+edge-tts
+numpy
