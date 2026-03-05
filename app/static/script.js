@@ -18,12 +18,10 @@ let mediaStream = null;
 let audioContext = null;
 let analyser = null;
 let scriptProcessor = null;
-let audioQueue = [];
-let isPlayingAudio = false;
 let sessionStartTime = null;
 let sessionTimer = null;
 let messageCount = 0;
-let appointmentCount = 0;
+let ticketCount = 0;
 let waveformAnimationId = null;
 
 // ─── DOM REFS ───
@@ -35,10 +33,10 @@ const latencyValue = document.getElementById('latency-value');
 const waveformCanvas = document.getElementById('waveform-canvas');
 const waveformState = document.getElementById('waveform-state');
 const transcriptContainer = document.getElementById('transcript-container');
-const appointmentsContainer = document.getElementById('appointments-container');
+const ticketsContainer = document.getElementById('tickets-container');
 const metricDuration = document.getElementById('metric-duration');
 const metricMessages = document.getElementById('metric-messages');
-const metricAppointments = document.getElementById('metric-appointments');
+const metricTickets = document.getElementById('metric-tickets');
 const metricState = document.getElementById('metric-state');
 
 const sttDot = document.getElementById('stt-dot');
@@ -115,13 +113,6 @@ function drawWaveform() {
 
     // Glow effect on edges for active states
     if (currentState === STATE.LISTENING || currentState === STATE.SPEAKING) {
-        const gradient = canvasCtx.createRadialGradient(
-            width / 2, centerY, 0,
-            width / 2, centerY, width * 0.6
-        );
-        gradient.addColorStop(0, color.replace(')', ', 0.03)').replace('rgb', 'rgba').replace('#', ''));
-        gradient.addColorStop(1, 'transparent');
-        // simplified: just add a subtle overlay
         canvasCtx.fillStyle = `${color}08`;
         canvasCtx.fillRect(0, 0, width, height);
     }
@@ -173,7 +164,7 @@ function updateSystemStatus(state) {
 
     // STT
     sttDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.LISTENING ? 'active' :
-        isActive ? 'active' : ''
+            isActive ? 'active' : ''
         }`;
     sttDot.style.backgroundColor = state === STATE.LISTENING ? '#00FFFF' :
         isActive ? '#00E676' : '';
@@ -183,7 +174,7 @@ function updateSystemStatus(state) {
 
     // LLM
     llmDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.PROCESSING ? 'warning' :
-        isActive ? 'active' : ''
+            isActive ? 'active' : ''
         }`;
     llmDot.style.backgroundColor = state === STATE.PROCESSING ? '#FFB300' :
         isActive ? '#00E676' : '';
@@ -193,7 +184,7 @@ function updateSystemStatus(state) {
 
     // TTS
     ttsDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.SPEAKING ? 'active' :
-        isActive ? 'active' : ''
+            isActive ? 'active' : ''
         }`;
     ttsDot.style.backgroundColor = state === STATE.SPEAKING ? '#00E676' :
         isActive ? '#00E676' : '';
@@ -245,29 +236,29 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ─── APPOINTMENT CARDS ───
-function addAppointment(data) {
-    appointmentCount++;
-    metricAppointments.textContent = appointmentCount;
+// ─── TICKET CARDS ───
+function addTicket(data) {
+    ticketCount++;
+    metricTickets.textContent = ticketCount;
 
-    // Remove "no appointments" placeholder
-    if (appointmentsContainer.querySelector('.text-center')) {
-        appointmentsContainer.innerHTML = '';
+    // Remove "no tickets" placeholder
+    if (ticketsContainer.querySelector('.text-center')) {
+        ticketsContainer.innerHTML = '';
     }
 
     const urgencyClass = `urgency-${data.urgency || 'medium'}`;
     const card = document.createElement('div');
-    card.className = `appointment-card ${urgencyClass}`;
+    card.className = `ticket-card ${urgencyClass}`;
     card.innerHTML = `
         <div class="flex justify-between items-center mb-1">
-            <span class="font-hud text-[10px] tracking-widest text-hud-cyan uppercase">#${String(data.id || appointmentCount).padStart(4, '0')}</span>
+            <span class="font-hud text-[10px] tracking-widest text-hud-cyan uppercase">#${String(data.id || ticketCount).padStart(4, '0')}</span>
             <span class="font-code text-[10px] text-text-muted">${data.urgency || 'medium'}</span>
         </div>
         <div class="font-body text-sm text-text-primary truncate">${escapeHtml(data.name || 'Unknown')}</div>
         <div class="font-body text-xs text-text-muted truncate mt-1">${escapeHtml(data.issue || 'No description')}</div>
     `;
 
-    appointmentsContainer.prepend(card);
+    ticketsContainer.prepend(card);
 }
 
 // ─── SESSION TIMER ───
@@ -285,53 +276,50 @@ function stopSessionTimer() {
     sessionTimer = null;
 }
 
-// ─── AUDIO PLAYBACK ───
+// ─── AUDIO PLAYBACK (RAW PCM16 @ 24kHz) ───
 let playbackAudioContext = null;
 let nextStartTime = 0;
 
-async function processPCMChunk(pcmData) {
+function processPCMChunk(pcmData) {
     if (!playbackAudioContext) {
         playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-        nextStartTime = playbackAudioContext.currentTime;
+        nextStartTime = 0;
     }
 
-    // Convert PCM16 to Float32
-    const int16Array = new Int16Array(pcmData.buffer);
-    const float32Array = new Float32Array(int16Array.length);
-    for (let i = 0; i < int16Array.length; i++) {
-        float32Array[i] = int16Array[i] / 32768.0;
+    // Convert raw PCM16 bytes to Float32 samples
+    const int16 = new Int16Array(pcmData.buffer, pcmData.byteOffset, pcmData.byteLength / 2);
+    const float32 = new Float32Array(int16.length);
+    for (let i = 0; i < int16.length; i++) {
+        float32[i] = int16[i] / 32768;
     }
 
-    // Create Buffer
-    const buffer = playbackAudioContext.createBuffer(1, float32Array.length, 24000);
-    buffer.getChannelData(0).set(float32Array);
+    // Create AudioBuffer
+    const audioBuffer = playbackAudioContext.createBuffer(1, float32.length, 24000);
+    audioBuffer.getChannelData(0).set(float32);
 
+    // Schedule playback
     const source = playbackAudioContext.createBufferSource();
-    source.buffer = buffer;
+    source.buffer = audioBuffer;
 
-    // Visualizer connection
+    // Connect through analyser for waveform visualization
     const playAnalyser = playbackAudioContext.createAnalyser();
     playAnalyser.fftSize = 256;
     source.connect(playAnalyser);
     playAnalyser.connect(playbackAudioContext.destination);
 
-    // Track state for visualizer
+    // Use this analyser for waveform
     analyser = playAnalyser;
-    waveformData = new Float32Array(256);
+    waveformData = new Float32Array(playAnalyser.fftSize);
 
-    // Schedule perfectly to avoid clicks
-    const startTime = Math.max(nextStartTime, playbackAudioContext.currentTime);
-    source.start(startTime);
-    nextStartTime = startTime + buffer.duration;
-
-    if (!isPlayingAudio) {
-        isPlayingAudio = true;
+    const now = playbackAudioContext.currentTime;
+    if (nextStartTime < now) {
+        nextStartTime = now;
     }
+    source.start(nextStartTime);
+    nextStartTime += audioBuffer.duration;
 }
 
 function clearAudioQueue() {
-    audioQueue = [];
-    isPlayingAudio = false;
     nextStartTime = 0;
 }
 
@@ -386,7 +374,7 @@ async function startCall() {
             // Send greeting to trigger initial agent response
             ws.send(JSON.stringify({ type: 'greeting' }));
             setState(STATE.PROCESSING);
-            addTranscript('system', '► Sending greeting signal...');
+            addTranscript('system', '▶ Sending greeting signal...');
 
             // Start sending audio data
             scriptProcessor.onaudioprocess = (e) => {
@@ -403,7 +391,7 @@ async function startCall() {
 
         ws.onmessage = async (event) => {
             if (event.data instanceof Blob) {
-                // Audio data from TTS — process raw PCM chunk instantly
+                // Raw PCM16 audio data from TTS
                 setState(STATE.SPEAKING);
                 const arrayBuffer = await event.data.arrayBuffer();
                 processPCMChunk(new Uint8Array(arrayBuffer));
@@ -413,12 +401,10 @@ async function startCall() {
                     const msg = JSON.parse(event.data);
 
                     if (msg.type === 'tts_complete') {
-                        // Reset speaker state when stream finishes
-                        isPlayingAudio = false;
                         setState(STATE.LISTENING);
                     } else if (msg.type === 'clear_audio') {
                         clearAudioQueue();
-                        addTranscript('system', '⟲ Barge-in detected — audio cleared');
+                        addTranscript('system', '⚡ Barge-in detected — audio cleared');
                         setState(STATE.LISTENING);
                     } else if (msg.type === 'transcript') {
                         addTranscript('user', msg.text);
@@ -426,9 +412,9 @@ async function startCall() {
                     } else if (msg.type === 'response') {
                         addTranscript('agent', msg.text);
                     } else if (msg.type === 'tool_call') {
-                        addTranscript('system', `► Tool called: ${msg.name}`);
-                        if (msg.name === 'book_appointment' && msg.result) {
-                            addAppointment(msg.result);
+                        addTranscript('system', `▶ Tool called: ${msg.name}`);
+                        if (msg.name === 'create_ticket' && msg.result) {
+                            addTicket(msg.result);
                         }
                     }
                 } catch (e) {
