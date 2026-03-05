@@ -1,6 +1,10 @@
-# 🎙️ AI Voice Agent — Control Center
+# 🎙️ AI Voice Agent — Mission Control
 
 ![AI Voice Agent Interface Screenshot](assets/interface.PNG)
+
+## 🏗️ System Architecture
+
+![System Architecture Diagram](assets/architecture_diagram.png)
 
 A production-ready, conversational AI Customer Support Voice Agent. Built to demonstrate a complete system architecture (Speech-to-Text → LLM → Text-to-Speech) using high-performance local and free-tier components.
 
@@ -12,13 +16,13 @@ A production-ready, conversational AI Customer Support Voice Agent. Built to dem
 - **Energy-Based VAD:** Server-side silence detection triggers transcription automatically
 - **AI Tool Use:** LLM autonomously creates support tickets via function calling
 - **Barge-in:** Interrupts cancel ongoing TTS and process new speech instantly
-- **Bold Dashboard UI:** Clean dark-mode control center with live waveforms and real-time ticket tracking
+- **Mission Control UI:** Cyberpunk dark-mode HUD with live waveforms and real-time ticket tracking
 - **Zero-Cost STT/TTS:** Runs entirely on local models and free APIs
 
 ## 🛠️ Tech Stack
 
 - **Backend:** Python + FastAPI (WebSocket streaming)
-- **Frontend:** Vanilla HTML/CSS/JS (Outfit + JetBrains Mono fonts)
+- **Frontend:** Vanilla HTML/CSS/JS (**Share Tech Mono + Fira Code + IBM Plex Sans** fonts)
 - **Database:** SQLite via SQLAlchemy
 - **AI:** `faster-whisper` (local STT), `edge-tts` (neural TTS), `groq` (Llama 3.3 LLM)
 
