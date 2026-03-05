@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Agent — Mission Control</title>
     <meta name="description"
-        content="AI-powered customer support voice agent with real-time speech-to-text, LLM reasoning, and text-to-speech — built for HVAC & Plumbing services.">
+        content="AI-powered customer support voice agent with real-time speech-to-text, LLM reasoning, and text-to-speech.">
 
     <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -140,9 +140,9 @@
                     </div>
                     <div>
                         <span
-                            class="font-hud text-[10px] tracking-widest uppercase text-text-muted block mb-1">Appointments
-                            Booked</span>
-                        <span id="metric-appointments" class="font-code text-2xl text-hud-emerald tabular-nums">0</span>
+                            class="font-hud text-[10px] tracking-widest uppercase text-text-muted block mb-1">Tickets
+                            Created</span>
+                        <span id="metric-tickets" class="font-code text-2xl text-hud-emerald tabular-nums">0</span>
                     </div>
                     <div>
                         <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted block mb-1">Current
@@ -200,14 +200,14 @@
             </div>
         </section>
 
-        <!-- ─── RIGHT COLUMN: Appointments ─── -->
+        <!-- ─── RIGHT COLUMN: Tickets ─── -->
         <section class="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
-            <!-- Recent Appointments -->
-            <div class="hud-panel p-4 flex-1 flex flex-col min-h-0" role="region" aria-label="Recent Appointments">
-                <h2 class="hud-section-title mb-3 flex-shrink-0">Recent Appointments</h2>
-                <div id="appointments-container" class="flex-1 overflow-y-auto space-y-2 min-h-0">
+            <!-- Support Tickets -->
+            <div class="hud-panel p-4 flex-1 flex flex-col min-h-0" role="region" aria-label="Support Tickets">
+                <h2 class="hud-section-title mb-3 flex-shrink-0">Support Tickets</h2>
+                <div id="tickets-container" class="flex-1 overflow-y-auto space-y-2 min-h-0">
                     <div class="text-center py-8">
-                        <span class="font-hud text-[10px] tracking-widest text-text-muted uppercase">No appointments
+                        <span class="font-hud text-[10px] tracking-widest text-text-muted uppercase">No tickets
                             yet</span>
                     </div>
                 </div>
@@ -223,7 +223,7 @@
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted">STT</span>
-                        <span class="font-code text-[11px] text-hud-cyan">Whisper STT</span>
+                        <span class="font-code text-[11px] text-hud-cyan">Faster-Whisper</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted">TTS</span>
@@ -235,7 +235,7 @@
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted">Domain</span>
-                        <span class="font-code text-[11px] text-hud-amber">HVAC & Plumbing</span>
+                        <span class="font-code text-[11px] text-hud-amber">Customer Support</span>
                     </div>
                 </div>
             </div>
