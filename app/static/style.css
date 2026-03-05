@@ -252,8 +252,8 @@
     }
 }
 
-/* ─── APPOINTMENT CARDS ─── */
-.appointment-card {
+/* ─── TICKET CARDS ─── */
+.ticket-card {
     background: rgba(0, 255, 255, 0.03);
     border: 1px solid var(--border-grid);
     padding: 10px 12px;
@@ -261,7 +261,7 @@
     animation: transcript-in 0.3s ease-out;
 }
 
-.appointment-card:hover {
+.ticket-card:hover {
     border-color: var(--border-active);
 }
 
