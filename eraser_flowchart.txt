@@ -1,0 +1,203 @@
+// ═══════════════════════════════════════════════
+//  AI Customer Support Voice Agent — Full Flow
+// ═══════════════════════════════════════════════
+
+typeface clean
+colorMode bold
+
+// ─── Entry Point ───
+Start [shape: oval, icon: flag, color: green, label: "python main.py"]
+
+// ─── Server Initialization ───
+Server Init [color: blue] {
+  Load Env [icon: settings, label: "Load .env (dotenv)"]
+  Start Uvicorn [icon: server, label: "Uvicorn 127.0.0.1:8000"]
+  Create FastAPI App [icon: zap, label: "Create FastAPI App"]
+  Add Middlewares [icon: shield, label: "CORS + Latency Logger"]
+  Init Database [icon: database, label: "SQLAlchemy create_all()"]
+  Mount Static [icon: folder, label: "Mount /static files"]
+  Register Routes [icon: git-branch, label: "Register / and /ws"]
+}
+
+Server Ready [shape: oval, icon: check, color: green, label: "Server Ready"]
+
+// ─── Browser Client ───
+Browser [color: purple] {
+  Open Dashboard [icon: layout, label: "Open Dashboard UI"]
+  Click Start [icon: phone, label: "User Clicks Start Call"]
+  Get Microphone [icon: mic, label: "getUserMedia (mono 16kHz)"]
+  Open WebSocket [icon: wifi, label: "Connect WebSocket /ws"]
+  Send Greeting [icon: message-circle, label: "Send greeting message"]
+}
+
+// ─── WebSocket Session ───
+WebSocket Session [color: yellow] {
+  Accept Connection [icon: check-circle, label: "Accept WebSocket"]
+  Init Whisper [icon: cpu, label: "Load Whisper Model (tiny.en)"]
+  Create Audio Buffer [icon: volume-2, label: "Create AudioBuffer (VAD)"]
+  Await Data [shape: diamond, icon: repeat, label: "Await client data"]
+}
+
+// ─── Audio Capture Loop ───
+Audio Capture [color: orange] {
+  Capture Audio [icon: mic, label: "ScriptProcessorNode captures PCM16"]
+  Send Chunks [icon: upload, label: "Send audio bytes via WebSocket"]
+}
+
+// ─── Voice Activity Detection ───
+VAD Engine [color: red] {
+  Receive Chunk [icon: volume-2, label: "AudioBuffer receives chunk"]
+  Compute RMS [icon: activity, label: "Compute RMS energy"]
+  Is Speech [shape: diamond, icon: alert-circle, label: "RMS > 500?"]
+  Accumulate Audio [icon: layers, label: "Accumulate in buffer"]
+  Accumulate Silence [icon: volume-x, label: "Accumulate silence bytes"]
+  Silence Check [shape: diamond, icon: clock, label: "Silence >= 400ms?"]
+}
+
+// ─── Speech-to-Text ───
+STT Pipeline [color: blue] {
+  Write WAV [icon: file, label: "Write PCM16 to temp .wav"]
+  Run Whisper [icon: cpu, label: "Whisper transcribe (beam=1, VAD on)"]
+  Get Transcript [icon: file-text, label: "Extract transcript text"]
+}
+
+// ─── Barge-In Check ───
+Barge In Check [shape: diamond, icon: alert-triangle, color: red, label: "TTS playing? (Barge-in)"]
+Cancel TTS [icon: x-circle, color: red, label: "Cancel TTS task"]
+Clear Audio [icon: volume-x, color: red, label: "Send clear_audio to browser"]
+
+// ─── Send Transcript ───
+Send Transcript [icon: message-circle, color: purple, label: "Send transcript JSON to browser"]
+
+// ─── LLM Processing ───
+LLM Processing [color: green] {
+  Build Messages [icon: list, label: "Append user msg to conversation"]
+  Call Groq [icon: cloud, label: "Groq API (Llama 3.3 70B)"]
+  Tool Check [shape: diamond, icon: tool, label: "Tool call returned?"]
+}
+
+// ─── Tool Execution ───
+Tool Execution [color: red] {
+  Parse Args [icon: code, label: "Parse create_ticket args"]
+  Create Ticket [icon: file-plus, label: "create_ticket_db()"]
+  Insert DB [icon: database, label: "INSERT INTO support_tickets"]
+  Return Result [icon: check-square, label: "Return ticket_id + status"]
+  Second LLM Call [icon: cloud, label: "Second Groq call for confirmation"]
+}
+
+// ─── Send Response ───
+Send Tool Info [icon: tool, color: red, label: "Send tool_call JSON to browser"]
+Send Response [icon: message-circle, color: green, label: "Send response JSON to browser"]
+
+// ─── Text-to-Speech ───
+TTS Pipeline [color: blue] {
+  Call Edge TTS [icon: cloud, label: "Edge TTS (en-US-AriaNeural)"]
+  Collect MP3 [icon: music, label: "Collect MP3 chunks"]
+  Convert PyAV [icon: repeat, label: "PyAV: MP3 to PCM16 24kHz"]
+  Stream Chunks [icon: send, label: "Stream 100ms PCM16 chunks"]
+}
+
+TTS Complete [icon: check, color: green, label: "Send tts_complete JSON"]
+
+// ─── Browser Playback ───
+Browser Playback [color: purple] {
+  Receive Audio [icon: download, label: "Receive PCM16 bytes"]
+  AudioContext Play [icon: volume-2, label: "AudioContext schedules playback"]
+  Update Waveform [icon: activity, label: "Render waveform canvas"]
+  Display Transcript [icon: file-text, label: "Update live transcript"]
+  Render Ticket [icon: credit-card, label: "Render ticket card"]
+}
+
+User Hears Response [shape: oval, icon: headphones, color: green, label: "User hears AI response"]
+End Call [shape: oval, icon: phone-off, color: red, label: "User ends call"]
+
+// ═══════════════════════════════════════════════
+//  CONNECTIONS
+// ═══════════════════════════════════════════════
+
+// Startup
+Start > Load Env
+Load Env > Start Uvicorn
+Start Uvicorn > Create FastAPI App
+Create FastAPI App > Add Middlewares
+Add Middlewares > Init Database
+Init Database > Mount Static
+Mount Static > Register Routes
+Register Routes > Server Ready
+
+// Browser connects
+Server Ready > Open Dashboard
+Open Dashboard > Click Start
+Click Start > Get Microphone
+Get Microphone > Open WebSocket
+Open WebSocket > Accept Connection
+Accept Connection > Init Whisper
+Init Whisper > Create Audio Buffer
+Create Audio Buffer > Send Greeting
+Send Greeting > Await Data
+
+// Audio capture loop
+Await Data > Capture Audio: Audio bytes
+Capture Audio > Send Chunks
+Send Chunks > Receive Chunk
+
+// VAD
+Receive Chunk > Compute RMS
+Compute RMS > Is Speech
+Is Speech > Accumulate Audio: Yes
+Is Speech > Accumulate Silence: No
+Accumulate Audio > Silence Check
+Accumulate Silence > Silence Check
+Silence Check > Await Data: No (keep listening)
+Silence Check > Write WAV: Yes (speech ended)
+
+// STT
+Write WAV > Run Whisper
+Run Whisper > Get Transcript
+
+// Barge-in
+Get Transcript > Barge In Check
+Barge In Check > Cancel TTS: Yes
+Cancel TTS > Clear Audio
+Barge In Check > Send Transcript: No
+
+Clear Audio > Send Transcript
+
+// LLM
+Send Transcript > Build Messages
+Build Messages > Call Groq
+Call Groq > Tool Check
+
+// Tool path
+Tool Check > Parse Args: Yes
+Parse Args > Create Ticket
+Create Ticket > Insert DB
+Insert DB > Return Result
+Return Result > Second LLM Call
+Second LLM Call > Send Tool Info
+Send Tool Info > Render Ticket
+Send Tool Info > Send Response
+
+// Direct response path
+Tool Check > Send Response: No
+
+// TTS
+Send Response > Display Transcript
+Send Response > Call Edge TTS
+Call Edge TTS > Collect MP3
+Collect MP3 > Convert PyAV
+Convert PyAV > Stream Chunks
+Stream Chunks > Receive Audio
+
+// Browser playback
+Receive Audio > AudioContext Play
+AudioContext Play > Update Waveform
+AudioContext Play > User Hears Response
+Stream Chunks > TTS Complete: All chunks sent
+
+// Loop back
+TTS Complete > Await Data: Listen for next speech
+User Hears Response > Await Data: Continue conversation
+
+// End
+Await Data > End Call: User clicks End Call
