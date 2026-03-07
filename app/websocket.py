@@ -93,6 +93,21 @@ async def websocket_endpoint(websocket: WebSocket):
                 if text_msg.get("type") == "greeting":
                     logger.info("Initializing conversation with greeting")
                     tts_task = asyncio.create_task(process_and_speak())
+                elif text_msg.get("type") == "correction":
+                    corrected = text_msg.get("corrected", "").strip()
+                    original = text_msg.get("original", "").strip()
+                    if corrected and original:
+                        # Replace the last matching user message with the corrected text
+                        for i in range(len(messages) - 1, -1, -1):
+                            if messages[i].get("role") == "user" and messages[i].get("content") == original:
+                                messages[i]["content"] = corrected
+                                logger.info(f"Transcript corrected: '{original}' → '{corrected}'")
+                                break
+                        # Re-process with corrected text
+                        if tts_task and not tts_task.done():
+                            tts_task.cancel()
+                            await websocket.send_json({"type": "clear_audio"})
+                        tts_task = asyncio.create_task(process_and_speak())
                     
     except WebSocketDisconnect:
         logger.info("Client disconnected gracefully.")
