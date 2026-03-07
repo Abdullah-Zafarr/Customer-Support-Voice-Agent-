@@ -589,13 +589,34 @@ const kbInput = document.getElementById('kb-file-input');
 const kbStatus = document.getElementById('kb-status');
 const kbProgress = document.getElementById('kb-progress');
 const reindexBtn = document.getElementById('reindex-button');
+const uploadZone = document.getElementById('upload-zone');
 
-if (kbInput) {
+if (kbInput && uploadZone) {
+    // File selection via click
     kbInput.addEventListener('change', async (e) => {
         const files = e.target.files;
-        if (files.length === 0) return;
+        if (files.length > 0) uploadDocs(files);
+    });
 
-        uploadDocs(files);
+    // Drag and Drop visual feedback
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('border-hud-cyan', 'bg-hud-cyan/5');
+    });
+
+    uploadZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('border-hud-cyan', 'bg-hud-cyan/5');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('border-hud-cyan', 'bg-hud-cyan/5');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            // Manually trigger upload since dropping on the container doesn't auto-fill the invisible input reliably
+            uploadDocs(files);
+        }
     });
 }
 

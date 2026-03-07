@@ -2,6 +2,7 @@ import json
 from groq import AsyncGroq
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from fastapi.concurrency import run_in_threadpool
 
 from .config import settings
 from .logger import logger
@@ -130,7 +131,7 @@ async def process_llm_turn(messages: List[Dict[str, Any]]) -> dict:
     
     if latest_user_msg:
         try:
-            chunks = query_knowledge(latest_user_msg)
+            chunks = await run_in_threadpool(query_knowledge, latest_user_msg)
             if chunks:
                 context_text = "\n\n".join(
                     f"[Source: {c['source']}]\n{c['text']}" for c in chunks
