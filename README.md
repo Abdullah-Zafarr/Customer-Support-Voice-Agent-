@@ -10,14 +10,13 @@ A production-ready, conversational AI Customer Support Voice Agent. Built to dem
 
 ## ✨ Features
 
-- **Local STT:** Powered by **Faster-Whisper** (`tiny.en`, int8 quantized, runs on CPU)
-- **Fast LLM Inference:** **Groq (Llama 3.3 70B)** for millisecond reasoning
-- **Neural TTS:** **Microsoft Edge TTS** — high-quality neural voice, zero cost
-- **Energy-Based VAD:** Server-side silence detection triggers transcription automatically
-- **AI Tool Use:** LLM autonomously creates support tickets via function calling
-- **Barge-in:** Interrupts cancel ongoing TTS and process new speech instantly
-- **Mission Control UI:** Cyberpunk dark-mode HUD with live waveforms and real-time ticket tracking
-- **Zero-Cost STT/TTS:** Runs entirely on local models and free APIs
+- **Ultra-Accurate STT:** Powered by **Faster-Whisper** (`small.en`, 244M params) for superior recognition of names and accents.
+- **Low-Latency Streaming:** Sentence-level **Text-to-Speech streaming** — hear the response instantly as it generates.
+- **Fast LLM Inference:** **Groq (Llama 3.3 70B)** for millisecond reasoning and professional support persona.
+- **Smart Ticket Tracking:** Autonomous **Support Ticket Management** — the AI updates existing tickets rather than cluttering with duplicates.
+- **Barge-in Logic:** Full duplex support — interrupts cancel ongoing TTS and process new speech immediately.
+- **Mission Control UI:** Cyberpunk dark-mode HUD with live waveforms, real-time ticket tracking, and system health status.
+- **Zero-Cost STT/TTS:** Runs entirely on high-performance local models and free-tier neural APIs.
 
 ## 🛠️ Tech Stack
 
@@ -84,12 +83,12 @@ Open **http://127.0.0.1:8000** → Click **Start Call** → Speak.
 
 ## 🧠 Pipeline
 
-1. Browser captures audio → 16kHz PCM16 via WebSocket
-2. Server VAD detects speech boundaries
-3. **Faster-Whisper** transcribes locally
-4. **Groq (Llama 3.3)** generates response + tool calls
-5. **Edge TTS** converts response to audio
-6. **PyAV** decodes MP3 → PCM16 chunks → streamed to browser
+1. Browser captures audio → 16kHz PCM16 via WebSocket.
+2. Server-side **Energy-Based VAD** triggers transcription.
+3. **Faster-Whisper (small.en)** transcribes locally.
+4. **Groq (Llama 3.3)** generates response + tool arguments.
+5. **Edge TTS** generates audio **sentence-by-sentence** for lowest possible latency.
+6. **PyAV** decodes → PCM16 chunks streamed instantly to browser.
 
 ## 📄 License
 
