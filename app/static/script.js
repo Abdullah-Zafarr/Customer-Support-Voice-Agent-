@@ -164,7 +164,7 @@ function updateSystemStatus(state) {
 
     // STT
     sttDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.LISTENING ? 'active' :
-            isActive ? 'active' : ''
+        isActive ? 'active' : ''
         }`;
     sttDot.style.backgroundColor = state === STATE.LISTENING ? '#00FFFF' :
         isActive ? '#00E676' : '';
@@ -174,7 +174,7 @@ function updateSystemStatus(state) {
 
     // LLM
     llmDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.PROCESSING ? 'warning' :
-            isActive ? 'active' : ''
+        isActive ? 'active' : ''
         }`;
     llmDot.style.backgroundColor = state === STATE.PROCESSING ? '#FFB300' :
         isActive ? '#00E676' : '';
@@ -184,7 +184,7 @@ function updateSystemStatus(state) {
 
     // TTS
     ttsDot.className = `status-dot w-2 h-2 rounded-full ${state === STATE.SPEAKING ? 'active' :
-            isActive ? 'active' : ''
+        isActive ? 'active' : ''
         }`;
     ttsDot.style.backgroundColor = state === STATE.SPEAKING ? '#00E676' :
         isActive ? '#00E676' : '';
@@ -237,28 +237,44 @@ function escapeHtml(text) {
 }
 
 // ─── TICKET CARDS ───
-function addTicket(data) {
-    ticketCount++;
-    metricTickets.textContent = ticketCount;
+function addOrUpdateTicket(data) {
+    console.log('[TICKET] addOrUpdateTicket called with:', JSON.stringify(data));
 
-    // Remove "no tickets" placeholder
-    if (ticketsContainer.querySelector('.text-center')) {
-        ticketsContainer.innerHTML = '';
+    // Remove "no tickets" placeholder if present (without nuking existing cards)
+    const placeholder = ticketsContainer.querySelector('.text-center');
+    if (placeholder) {
+        placeholder.remove();
     }
 
+    const ticketId = data.id || (ticketCount + 1);
+    const cardId = `ticket-card-${ticketId}`;
+    let existingCard = document.getElementById(cardId);
+
     const urgencyClass = `urgency-${data.urgency || 'medium'}`;
-    const card = document.createElement('div');
-    card.className = `ticket-card ${urgencyClass}`;
-    card.innerHTML = `
+    const contentHTML = `
         <div class="flex justify-between items-center mb-1">
-            <span class="font-hud text-[10px] tracking-widest text-hud-cyan uppercase">#${String(data.id || ticketCount).padStart(4, '0')}</span>
+            <span class="font-hud text-[10px] tracking-widest text-hud-cyan uppercase">#${String(ticketId).padStart(4, '0')}</span>
             <span class="font-code text-[10px] text-text-muted">${data.urgency || 'medium'}</span>
         </div>
         <div class="font-body text-sm text-text-primary truncate">${escapeHtml(data.name || 'Unknown')}</div>
         <div class="font-body text-xs text-text-muted truncate mt-1">${escapeHtml(data.issue || 'No description')}</div>
     `;
 
-    ticketsContainer.prepend(card);
+    if (existingCard) {
+        console.log('[TICKET] Updating existing card:', cardId);
+        existingCard.className = `ticket-card ${urgencyClass}`;
+        existingCard.innerHTML = contentHTML;
+    } else {
+        console.log('[TICKET] Creating new card:', cardId);
+        ticketCount++;
+        metricTickets.textContent = ticketCount;
+
+        const card = document.createElement('div');
+        card.id = cardId;
+        card.className = `ticket-card ${urgencyClass}`;
+        card.innerHTML = contentHTML;
+        ticketsContainer.prepend(card);
+    }
 }
 
 // ─── SESSION TIMER ───
@@ -413,8 +429,8 @@ async function startCall() {
                         addTranscript('agent', msg.text);
                     } else if (msg.type === 'tool_call') {
                         addTranscript('system', `▶ Tool called: ${msg.name}`);
-                        if (msg.name === 'create_ticket' && msg.result) {
-                            addTicket(msg.result);
+                        if (msg.name === 'manage_ticket' && msg.result && msg.result.id) {
+                            addOrUpdateTicket(msg.result);
                         }
                     }
                 } catch (e) {
