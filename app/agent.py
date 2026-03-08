@@ -6,6 +6,7 @@ from typing import List, Dict, Any, Optional
 from .config import settings
 from .logger import logger
 from .database import SessionLocal, SupportTicket
+from .rag import query_knowledge
 
 # Initialize AsyncGroq client
 groq_client = AsyncGroq(api_key=settings.GROQ_API_KEY)
@@ -19,6 +20,7 @@ Ask ONE question at a time. Keep responses under 2 sentences.
 IMPORTANT RULES:
 - Do NOT create a ticket until you have BOTH the customer's name AND a description of their issue.
 - If you only have the name, ask for the issue first. Never create a ticket with an empty issue.
+- If KNOWLEDGE CONTEXT is provided below, use it to answer the user's questions accurately. Base your answers on the provided context. If the context doesn't cover the question, say you don't have that information right now.
 
 Flow:
 1. Greet the caller and ask for their name.
@@ -116,9 +118,34 @@ TOOLS = [
 async def process_llm_turn(messages: List[Dict[str, Any]]) -> dict:
     """Process a turn with the LLM and handle function calling if needed."""
     
-    # Ensure system prompt is present
-    if not any(m.get("role") == "system" for m in messages):
-        messages.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
+    # Build system prompt with optional RAG context
+    system_prompt = SYSTEM_PROMPT
+    
+    # Find the latest user message for RAG retrieval
+    latest_user_msg = None
+    for m in reversed(messages):
+        if m.get("role") == "user":
+            latest_user_msg = m.get("content", "")
+            break
+    
+    if latest_user_msg:
+        try:
+            chunks = query_knowledge(latest_user_msg)
+            if chunks:
+                context_text = "\n\n".join(
+                    f"[Source: {c['source']}]\n{c['text']}" for c in chunks
+                )
+                system_prompt += f"\n\nKNOWLEDGE CONTEXT:\n{context_text}\n"
+                logger.info(f"RAG: Injected {len(chunks)} chunks into prompt.")
+        except Exception as e:
+            logger.warning(f"RAG retrieval failed (non-fatal): {e}")
+    
+    # Ensure system prompt is present (or update it)
+    sys_idx = next((i for i, m in enumerate(messages) if m.get("role") == "system"), None)
+    if sys_idx is not None:
+        messages[sys_idx]["content"] = system_prompt
+    else:
+        messages.insert(0, {"role": "system", "content": system_prompt})
         
     try:
         response = await groq_client.chat.completions.create(
