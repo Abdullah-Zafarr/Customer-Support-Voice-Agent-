@@ -35,3 +35,7 @@ desktop.ini
 # IDE
 .vscode/
 .idea/
+
+# RAG data
+knowledge_index.json
+chroma_db/
