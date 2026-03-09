@@ -583,3 +583,72 @@ setInterval(() => {
         latencyValue.style.color = simulatedLatency > 150 ? '#FFB300' : '#00FFFF';
     }
 }, 2000);
+
+// ══════════════ KNOWLEDGE BASE (RAG) ══════════════
+const kbInput = document.getElementById('kb-file-input');
+const kbStatus = document.getElementById('kb-status');
+const kbProgress = document.getElementById('kb-progress');
+const reindexBtn = document.getElementById('reindex-button');
+
+if (kbInput) {
+    kbInput.addEventListener('change', async (e) => {
+        const files = e.target.files;
+        if (files.length === 0) return;
+
+        uploadDocs(files);
+    });
+}
+
+if (reindexBtn) {
+    reindexBtn.addEventListener('click', async () => {
+        setKBStatus('SYNCING...', 'amber', 30);
+        try {
+            const resp = await fetch('/ingest', { method: 'POST' });
+            const data = await resp.json();
+            setKBStatus('READY', 'emerald', 100);
+            addTranscript('system', `Knowledge Base synchronized: ${data.chunks} chunks found.`);
+        } catch (err) {
+            console.error('Re-index failed:', err);
+            setKBStatus('FAILED', 'rose', 0);
+        }
+    });
+}
+
+function setKBStatus(text, colorClass, percent) {
+    if (!kbStatus || !kbProgress) return;
+    kbStatus.textContent = text;
+    kbStatus.className = `font-code text-[10px] text-hud-${colorClass}`;
+    kbProgress.style.width = `${percent}%`;
+    if (colorClass === 'emerald') {
+        setTimeout(() => { kbProgress.style.width = '0%'; }, 2000);
+    }
+}
+
+async function uploadDocs(files) {
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+
+    setKBStatus('UPLOADING...', 'amber', 50);
+
+    try {
+        const resp = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (resp.ok) {
+            const data = await resp.json();
+            setKBStatus('READY', 'emerald', 100);
+            addTranscript('system', `Intelligence updated: ${data.message}`);
+        } else {
+            throw new Error('Upload failed');
+        }
+    } catch (err) {
+        console.error('Upload error:', err);
+        setKBStatus('FAILED', 'rose', 0);
+        addTranscript('system', 'Knowledge Base upload failed. Check the server logs.');
+    }
+}
+

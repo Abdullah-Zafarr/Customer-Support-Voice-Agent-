@@ -12,3 +12,4 @@ edge-tts
 numpy
 sentence-transformers
 PyMuPDF
+python-multipart

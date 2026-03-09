@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from typing import List
 from .logger import log_latency_middleware, logger
 from .database import Base, engine
 from .websocket import router as ws_router
@@ -53,4 +54,26 @@ async def ingest():
     """Re-index all documents in the knowledge/ folder."""
     result = ingest_documents()
     return result
+
+@app.post("/upload")
+async def upload_files(files: List[UploadFile] = File(...)):
+    """Upload documents to the knowledge/ folder and trigger ingestion."""
+    knowledge_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge")
+    os.makedirs(knowledge_dir, exist_ok=True)
+    
+    uploaded_files = []
+    for file in files:
+        file_path = os.path.join(knowledge_dir, file.filename)
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        uploaded_files.append(file.filename)
+        logger.info(f"Uploaded: {file.filename}")
+    
+    # Trigger re-index
+    result = ingest_documents(knowledge_dir)
+    return {
+        "status": "success",
+        "files": uploaded_files,
+        "message": f"Successfully uploaded and indexed {len(uploaded_files)} file(s)."
+    }
 

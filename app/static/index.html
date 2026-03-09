@@ -151,6 +151,43 @@
                     </div>
                 </div>
             </div>
+            <!-- Knowledge Base (RAG) -->
+            <div class="hud-panel p-4 flex flex-col" role="region" aria-label="Knowledge Base">
+                <h2 class="hud-section-title mb-3">Knowledge Base</h2>
+                <p class="font-body text-[11px] text-text-muted mb-4 leading-relaxed">
+                    Upload documents (.txt, .md, .pdf) to ground the AI's responses in specific documentation.
+                </p>
+
+                <div id="upload-zone"
+                    class="border border-dashed border-grid-line p-5 rounded-sm text-center transition-all duration-300 hover:border-hud-cyan group cursor-pointer relative overflow-hidden">
+                    <input type="file" id="kb-file-input" class="absolute inset-0 opacity-0 cursor-pointer"
+                        accept=".txt,.md,.pdf" multiple>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                        class="mx-auto mb-2 text-text-muted group-hover:text-hud-cyan transition-colors">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span
+                        class="font-hud text-[10px] tracking-widest text-text-muted transition-colors group-hover:text-hud-cyan uppercase block">Drop
+                        files or click</span>
+                </div>
+
+                <!-- Active Index Status -->
+                <div class="mt-4 pt-4 border-t border-grid-line">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-hud text-[10px] tracking-widest text-text-muted uppercase">Index Status</span>
+                        <span id="kb-status" class="font-code text-[10px] text-hud-emerald">READY</span>
+                    </div>
+                    <div class="w-full h-1 bg-grid-line overflow-hidden">
+                        <div id="kb-progress" class="w-0 h-full bg-hud-cyan transition-all duration-500"></div>
+                    </div>
+                    <button id="reindex-button"
+                        class="mt-3 w-full border border-hud-cyan/20 hover:border-hud-cyan/60 py-1.5 font-hud text-[10px] tracking-widest text-hud-cyan uppercase transition-all duration-300">
+                        Synchronize Index
+                    </button>
+                </div>
+            </div>
         </section>
 
         <!-- ─── CENTER COLUMN: Waveform + Transcript ─── -->
