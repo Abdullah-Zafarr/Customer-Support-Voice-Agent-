@@ -1,46 +1,66 @@
 # 📜 Version Changes (Changelog)
 
-This document tracks the technical evolution, architectural shifts, and core feature additions of the AI Voice Agent project.
+This document tracks the evolution of the AI Voice Agent project, highlighting what new features were added for the user and how they were built under the hood.
 
-## 📂 Version 2.2 — Intelligence Expansion & Concurrency (March 7, 2026)
-*Architectural Focus: Non-blocking data ingestion and multipart API endpoints.*
-- **Async Threadpooling:** Offloaded CPU-bound `sentence-transformers` embedding tasks to `fastapi.concurrency.run_in_threadpool`, ensuring the async event loop remains unblocked during heavy RAG ingestions.
-- **Multipart Upload API:** Deployed a new `/upload` POST endpoint utilizing `python-multipart` for secure, high-performance binary file streaming from the client to the server's `knowledge/` directory.
-- **Drag & Drop Pipeline:** Engineered a frontend drag-and-drop interface with custom event listeners (`dragover`, `drop`) that instantly triggers background re-indexing upon file drop.
-- **Fault-Tolerant WebSockets:** Implemented strict `try/except` JSON parsing guards within the WebSocket receiver loop to prevent malformed text packets from crashing active audio streams.
+## 📂 Version 2.2 — Intelligence Expansion (March 7, 2026)
+*Focus: Allowing the AI to read your documents and answer questions based on them.*
+
+- **Feature: Knowledge Base (RAG)**
+  The agent can now read custom uploaded documents (like Shopify FAQs or manuals) and ground its answers in your specific text.
+  *Tech:* Implemented a custom RAG (Retrieval-Augmented Generation) engine using `sentence-transformers` for local file embeddings. Top-K relevant chunks are injected into the Groq LLM `SYSTEM_PROMPT`.
+- **Feature: Drag-and-Drop Uploads**
+  Added a slick UI zone allowing you to drag `.txt`, `.md`, or `.pdf` files straight into the dashboard.
+  *Tech:* Used `python-multipart` for secure backend routing and added Javascript `drop` events that visually highlight the HUD and trigger background re-indexing.
+- **Feature: Zero-Freeze Processing**
+  Uploading massive documents won't stutter the live voice call; the AI keeps listening while it reads.
+  *Tech:* Offloaded the heavily CPU-bound embedding tasks to background threads using `fastapi.concurrency.run_in_threadpool`.
 
 ---
 
-## 🚀 Version 2.1 — RAG Foundation & State Correction (March 7, 2026)
-*Architectural Focus: Vector similarity search and conversational state mutability.*
-- **Lightweight RAG Engine:** Built a custom retrieval-augmented generation engine (`app/rag.py`) using `sentence-transformers` for embeddings and NumPy for fast cosine similarity search, bypassing the need for heavy external vector databases (like ChromaDB).
-- **Vector Persistence:** Engineered local JSON-based indexing (`knowledge_index.json`) for fast startup caching of chunked embeddings and metadata.
-- **State Correction Protocol:** Invented a WebSocket protocol allowing the frontend to send `correction` events. The backend now dynamically traverses the `messages` array, injects the corrected transcript, and truncates subsequent history to force the LLM to re-evaluate the accurate state.
-- **Context Injection:** Modified the Groq LLM processing pipeline to dynamically inject top-K relevant chunks into the `SYSTEM_PROMPT` immediately before inference.
+## 🚀 Version 2.1 — Precision & Stability (March 7, 2026)
+*Focus: Giving users control over mistakes and stopping the AI from making bad guesses.*
+
+- **Feature: Editable Transcripts**
+  If the speech-to-text mishears a name, you can click the live transcript on the screen, edit the typo, and hit Enter to correct it before the AI gets confused.
+  *Tech:* Built a WebSocket `correction` protocol. When you edit text, the backend searches its internal `messages` array, injects your fix, and dynamically truncates the conversation history so the LLM resets its context perfectly.
+- **Feature: Smarter Ticket Creation**
+  The AI will now strictly refuse to log a support ticket unless you give it *both* your name and the specific issue you're facing.
+  *Tech:* Engineered strict guardrails into the Groq system prompt mapping, preventing premature JSON tool calls (`manage_ticket`).
+- **Feature: Bulletproof Audio Link**
+  The voice connection is now highly resilient against network blips or bad data.
+  *Tech:* Wrapped the WebSocket receiver loop in rigorous `try/except` JSON parsing guards to prevent malformed text packets from crashing the stream.
 
 ---
 
 ## ⚡ Version 2.0 — Local Power & Audio Streaming (March 5, 2026)
-*Architectural Focus: Complete overhaul of the audio I/O pipeline and local processing.*
-- **Local STT Pipeline:** Ripped out cloud-dependent STT APIs and integrated `faster-whisper` (`small.en` model) running directly on the CPU, aggressively optimizing latency.
-- **Neural TTS Streaming:** Replaced standard text-to-speech with Microsoft Edge's Neural TTS wrapper (`edge-tts`), streaming raw MP3 bytes directly back through the WebSocket.
-- **Web Audio API Integration:** Architected the frontend `script.js` to capture microphone inputs, convert them to raw PCM16 chunks via an `AudioContext` ScriptProcessor, and stream binary data to the backend.
-- **PCM Playback:** Implemented raw Float32 audio buffering on the client side to accept incoming TTS bytes, feed an AnalyserNode for the dynamic waveform visualizer, and output to the speakers without stuttering.
-- **Database Abstraction:** Refactored SQLAlchemy models, abstracting domain-specific "Appointments" into a flexible "SupportTicket" entity capable of handling various customer issues.
+*Focus: Making the app faster, entirely free to run, and visually stunning.*
+
+- **Feature: 100% Free Voice Infrastructure**
+  Ripped out expensive cloud subscriptions; the agent's ears and mouth are now powered locally and for free.
+  *Tech:* Transitioned the Speech-to-Text engine to run directly on your CPU using `faster-whisper` (`small.en`), and the Text-to-Speech to Microsoft Edge's Neural wrapper (`edge-tts`).
+- **Feature: "Mission Control" Overhaul**
+  Replaced the generic white UI with a stunning, dark-mode cyberpunk dashboard featuring a pulsing audio visualizer.
+  *Tech:* Built a custom CSS grid using Tailwind, the "Share Tech Mono" font, and native Web Audio API `AudioContext` nodes to draw raw Float32 audio data onto an HTML5 Canvas.
+- **Feature: Support Ticket Database**
+  Changed the fundamental purpose of the agent from taking random "Appointments" to managing technical "Support Tickets."
+  *Tech:* Refactored the underlying SQLite DB and SQLAlchemy ORM models from `Appointment` to `SupportTicket` with urgency tracking.
 
 ---
 
 ## 🎙️ Version 1.1 — Core AI Synthesis (March 4, 2026)
-*Architectural Focus: LLM integration and Tool Calling.*
-- **Function Calling Engine:** Enabled the Groq API to utilize JSON schema-based tool calling (`manage_ticket`), allowing the AI to autonomously interact with the SQLite database.
-- **Prompt Guardrails:** Engineered strict state-machine logic within the `SYSTEM_PROMPT` to prevent the agent from firing database tools with incomplete data (e.g., missing issue descriptions).
-- **Asynchronous Task Management:** Built the core `asyncio.create_task` wrapper surrounding the LLM/TTS generation loop in `websocket.py`, allowing the system to cancel TTS streams instantly upon STT "barge-in" events.
+*Focus: Connecting the brain to the mouth.*
+
+- **Feature: AI Tool Usage**
+  The Voice Agent isn't just a chatbot; it can autonomously take actions and decide when to create database records.
+  *Tech:* Enabled the Groq API to utilize JSON schema-based tool calling.
+- **Feature: Seamless Interruptions (Barge-in)**
+  If the AI is talking and you interrupt it, it instantly shuts up and listens to your new sentence.
+  *Tech:* Wrapped the TTS generation loop in an `asyncio.create_task` that is instantly cancelled upon triggering the STT audio buffer callback.
 
 ---
 
-## 🛠️ Version 1.0 — System Foundation (March 3, 2026)
-*Architectural Focus: Scaffolding and initial routing.*
-- **FastAPI Core:** Initialized the Uvicorn/FastAPI backend framework with CORS middleware.
-- **Database ORM:** Established the SQLite database connection and SQLAlchemy dependency injection models.
-- **Environment Management:** Implemented secure `.env` secret management via `pydantic-settings`.
-- **Static Marshalling:** Set up `StaticFiles` mounting for serving the vanilla HTML/CSS/JS frontend dashboard.
+## 🛠️ Version 1.0 — Architecture Foundation (March 3, 2026)
+*Focus: Getting the server breathing.*
+
+- **Feature:** Initial project scaffolding and routing.
+- **Tech:** Established the Uvicorn/FastAPI backend framework, configured the SQLite connection, and implemented `.env` secret management via `pydantic-settings`.
