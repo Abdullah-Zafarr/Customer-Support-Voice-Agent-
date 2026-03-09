@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.concurrency import run_in_threadpool
 from typing import List
 from .logger import log_latency_middleware, logger
 from .database import Base, engine
@@ -40,7 +41,7 @@ async def startup_event():
         if f != "README.md"
     ):
         logger.info("Knowledge folder detected — ingesting documents...")
-        result = ingest_documents(knowledge_dir)
+        result = await run_in_threadpool(ingest_documents, knowledge_dir)
         logger.info(f"Ingestion result: {result['message']}")
     else:
         logger.info("No knowledge documents found. RAG will be inactive.")
@@ -52,7 +53,7 @@ async def root():
 @app.post("/ingest")
 async def ingest():
     """Re-index all documents in the knowledge/ folder."""
-    result = ingest_documents()
+    result = await run_in_threadpool(ingest_documents)
     return result
 
 @app.post("/upload")
@@ -70,7 +71,7 @@ async def upload_files(files: List[UploadFile] = File(...)):
         logger.info(f"Uploaded: {file.filename}")
     
     # Trigger re-index
-    result = ingest_documents(knowledge_dir)
+    result = await run_in_threadpool(ingest_documents, knowledge_dir)
     return {
         "status": "success",
         "files": uploaded_files,

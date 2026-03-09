@@ -89,7 +89,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 await stt_buffer.add_chunk(audio_data)
             elif "text" in data:
                 # Control messages or greetings
-                text_msg = json.loads(data["text"])
+                try:
+                    text_msg = json.loads(data["text"])
+                except json.JSONDecodeError:
+                    logger.warning(f"Received malformed JSON over WebSocket: {data['text']}")
+                    continue
+
                 if text_msg.get("type") == "greeting":
                     logger.info("Initializing conversation with greeting")
                     tts_task = asyncio.create_task(process_and_speak())
