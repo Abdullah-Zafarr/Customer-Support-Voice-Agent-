@@ -2,7 +2,17 @@
 
 This document tracks the evolution of the AI Voice Agent project across different iterative versions.
 
-## 🚀 Version 2.1 — Precision & Stability (March 7, 2026)
+## � Version 2.2 — Intelligence Expansion (March 7, 2026)
+*Focus: Seamless knowledge base management from the dashboard.*
+- **RAG Upload HUD:** Added a dedicated "Knowledge Base" panel to the left column of the dashboard.
+- **Drag & Drop:** Support for dragging and dropping `.txt`, `.md`, and `.pdf` files into the mission control UI.
+- **Async Ingestion:** Uploaded files are automatically chunked, embedded, and re-indexed in the background with real-time UI status updates.
+- **Synchronize Control:** Manual "Synchronize Index" button to force a full re-scan of the knowledge folder.
+- **Multipart Backend:** Integrated `python-multipart` into the FastAPI backend for secure, high-performance file handling.
+
+---
+
+## �🚀 Version 2.1 — Precision & Stability (March 7, 2026)
 *Focus: Enhancing AI accuracy, real-time corrections, and robust UI.*
 - **Editable Transcripts:** Added a clickable, editable UI for Live Transcripts. Users can now instantly correct STT mistakes before the LLM processes them.
 - **History Truncation:** Backend WebSocket handler now truncates conversation history gracefully upon receiving text corrections to prevent the agent from looping or stalling.
