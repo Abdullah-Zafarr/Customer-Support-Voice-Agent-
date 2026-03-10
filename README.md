@@ -30,17 +30,25 @@ A production-ready, conversational AI Customer Support Voice Agent. Built to dem
 ```text
 .
 ├── app/
+│   ├── core/
+│   │   ├── config.py         # Environment config
+│   │   └── logger.py         # Logging middleware
+│   ├── db/
+│   │   └── database.py       # SQLAlchemy models
+│   ├── routers/
+│   │   └── websocket.py      # Real-time streaming handler
+│   ├── services/
+│   │   ├── agent.py          # LLM logic & tool definitions
+│   │   ├── rag.py            # RAG Engine (Retrieval-Augmented Generation)
+│   │   └── whisper_client.py # Whisper STT & Edge TTS
 │   ├── static/
 │   │   ├── index.html        # Dashboard UI
 │   │   ├── script.js         # Audio capture & WebSocket logic
 │   │   └── style.css         # Dark-mode styling
-│   ├── agent.py              # LLM logic & tool definitions
-│   ├── config.py             # Environment config
-│   ├── database.py           # SQLAlchemy models
-│   ├── whisper_client.py     # Whisper STT & Edge TTS
-│   ├── logger.py             # Logging
-│   ├── main.py               # FastAPI app
-│   └── websocket.py          # Real-time streaming handler
+│   └── main.py               # FastAPI app application factory
+├── data/
+│   └── knowledge_index.json  # RAG vector index
+├── knowledge/                # Text files & PDFs for RAG
 ├── main.py                   # Entry point
 ├── requirements.txt          # Dependencies
 └── .env                      # API keys (Groq only)
