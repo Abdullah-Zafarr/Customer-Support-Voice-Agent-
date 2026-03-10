@@ -1,0 +1,15 @@
+Aura Ultralight Pro (2026 Model) - Technical Specifications
+
+Processor: Quantum-8 Core 4.2GHz (Turbo up to 6.8GHz)
+RAM: 48GB Unified Hybrid Memory (Fixed, Not Upgradable)
+Display: 14.2-inch "Nebula" Mini-LED (120Hz, 1600 nits)
+Battery Capacity: 84Wh (Lasts up to 21 hours on light use)
+
+**CRITICAL MAINTENANCE INSTRUCTIONS**
+1. Do NOT clean the Nebula display with isopropyl alcohol. Only use the "Polishing Cloth" provided in the box. Alcohol will strip the anti-reflective coating instantly.
+2. The specialized "Silent-Key" mechanism must be cleaned with compressed air only at a 45-degree angle.
+3. The "Eco-Chill" fanless heat sink can reach 85 degrees Celsius during continuous 4K video rendering. This is normal and thermally throttled at 90 degrees.
+4. Firmware updates are pushed automatically on alternate Tuesdays at 2:00 AM local time.
+
+Aura Support Hotline: 1-800-AURA-LITE
+Replacement Battery Part Number: AP-2026-X84
