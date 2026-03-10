@@ -10,6 +10,7 @@ A production-ready, conversational AI Customer Support Voice Agent. Built to dem
 
 ## ✨ Features
 
+- **Autonomous RAG Engine:** Built-in **Retrieval-Augmented Generation** — drop your manuals (`.txt`, `.md`, `.pdf`) into the `knowledge/` folder, and the AI will answer questions based on them.
 - **Ultra-Accurate STT:** Powered by **Faster-Whisper** (`small.en`, 244M params) for superior recognition of names and accents.
 - **Low-Latency Streaming:** Sentence-level **Text-to-Speech streaming** — hear the response instantly as it generates.
 - **Fast LLM Inference:** **Groq (Llama 3.3 70B)** for millisecond reasoning and professional support persona.
@@ -88,6 +89,15 @@ python main.py
 ```
 
 Open **http://127.0.0.1:8000** → Click **Start Call** → Speak.
+
+## 🔍 Retrieval-Augmented Generation (RAG)
+
+The agent is equipped with a custom-built RAG engine that allows it to act as a domain expert for your specific documentation.
+
+- **Automated Ingestion:** The server automatically scans the `knowledge/` directory on startup.
+- **Neural Search:** Uses the `all-MiniLM-L6-v2` transformer model to convert text into high-dimensional vectors.
+- **Lightweight Index:** No complex database needed — uses a local `numpy`-based cosine similarity search for sub-millisecond retrieval.
+- **Supported Formats:** Just drag and drop `.md`, `.txt`, or `.pdf` files into the `knowledge/` folder.
 
 ## 🧠 Pipeline
 
