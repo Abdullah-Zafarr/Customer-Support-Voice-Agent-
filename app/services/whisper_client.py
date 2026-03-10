@@ -14,7 +14,7 @@ from faster_whisper import WhisperModel
 import edge_tts
 import av
 
-from .logger import logger
+from ..core.logger import logger
 
 # ─── WHISPER MODEL (loaded once at startup) ───
 _whisper_model = None

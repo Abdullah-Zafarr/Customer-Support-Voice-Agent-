@@ -8,11 +8,11 @@ import os
 import re
 import json
 import numpy as np
-from .logger import logger
+from ..core.logger import logger
 
 # ─── CONFIG ───
-KNOWLEDGE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge")
-INDEX_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_index.json")
+KNOWLEDGE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "knowledge")
+INDEX_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "knowledge_index.json")
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 100
 TOP_K = 3

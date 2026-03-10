@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
-from .config import settings
+from ..core.config import settings
 
 engine = create_engine(
     settings.DATABASE_URL, connect_args={"check_same_thread": False}

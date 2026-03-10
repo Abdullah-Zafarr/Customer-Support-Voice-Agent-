@@ -4,10 +4,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.concurrency import run_in_threadpool
 from typing import List
-from .logger import log_latency_middleware, logger
-from .database import Base, engine
-from .websocket import router as ws_router
-from .rag import ingest_documents
+from .core.logger import log_latency_middleware, logger
+from .db.database import Base, engine
+from .routers.websocket import router as ws_router
+from .services.rag import ingest_documents
 
 import os
 

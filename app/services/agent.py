@@ -4,9 +4,9 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from fastapi.concurrency import run_in_threadpool
 
-from .config import settings
-from .logger import logger
-from .database import SessionLocal, SupportTicket
+from ..core.config import settings
+from ..core.logger import logger
+from ..db.database import SessionLocal, SupportTicket
 from .rag import query_knowledge
 
 # Initialize AsyncGroq client

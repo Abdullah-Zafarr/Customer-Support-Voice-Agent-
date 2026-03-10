@@ -3,9 +3,9 @@ import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import List, Dict, Any
 
-from .whisper_client import setup_stt, get_tts_stream
-from .agent import process_llm_turn
-from .logger import logger
+from ..services.whisper_client import setup_stt, get_tts_stream
+from ..services.agent import process_llm_turn
+from ..core.logger import logger
 
 router = APIRouter()
 
