@@ -8,6 +8,8 @@ from .core.logger import log_latency_middleware, logger
 from .db.database import Base, engine
 from .routers.websocket import router as ws_router
 from .services.rag import ingest_documents
+from .services.settings_manager import load_settings, save_settings
+from pydantic import BaseModel
 
 import os
 
@@ -77,4 +79,40 @@ async def upload_files(files: List[UploadFile] = File(...)):
         "files": uploaded_files,
         "message": f"Successfully uploaded and indexed {len(uploaded_files)} file(s)."
     }
+
+class SettingsUpdate(BaseModel):
+    agent_name: str = None
+    voice: str = None
+    temperature: float = None
+    system_prompt: str = None
+
+@app.get("/api/settings")
+async def get_settings():
+    return load_settings()
+
+@app.patch("/api/settings")
+async def update_settings(payload: SettingsUpdate):
+    data = {k: v for k, v in payload.dict().items() if v is not None}
+    if save_settings(data):
+        return {"status": "success", "message": "Settings updated."}
+    return {"status": "error", "message": "Failed to update settings."}
+
+@app.get("/api/knowledge-files")
+async def get_knowledge_files():
+    knowledge_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge")
+    if not os.path.exists(knowledge_dir):
+        return []
+    files = [f for f in os.listdir(knowledge_dir) if f != "README.md" and f.endswith(('.txt', '.md', '.pdf', '.json'))]
+    return files
+
+@app.delete("/api/knowledge-files/{filename}")
+async def delete_knowledge_file(filename: str):
+    knowledge_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge")
+    file_path = os.path.join(knowledge_dir, filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        # Trigger re-index
+        await run_in_threadpool(ingest_documents, knowledge_dir)
+        return {"status": "success", "message": f"Deleted {filename} and re-indexed knowledge."}
+    return {"status": "error", "message": "File not found."}
 
