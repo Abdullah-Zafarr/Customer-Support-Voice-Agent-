@@ -6,63 +6,43 @@ from fastapi.concurrency import run_in_threadpool
 
 from ..core.config import settings
 from ..core.logger import logger
-from ..db.database import SessionLocal, SupportTicket
+from ..db.database import SessionLocal, SupportTicket # We'll reuse SupportTicket table for Inquiry logging to avoid model migration overhead right now
 from .rag import query_knowledge
+from .settings_manager import load_settings
 
 # Initialize AsyncGroq client
 groq_client = AsyncGroq(api_key=settings.GROQ_API_KEY)
 MODEL = "llama-3.3-70b-versatile"
 
-SYSTEM_PROMPT = """You are a professional AI Customer Support Agent.
-Your job is to greet the caller, understand their issue, and log/update a support ticket.
-Be warm, conversational, and efficient — you're speaking over the phone.
-Ask ONE question at a time. Keep responses under 2 sentences.
-
-IMPORTANT RULES:
-- Do NOT create a ticket until you have BOTH the customer's name AND a description of their issue.
-- If you only have the name, ask for the issue first. Never create a ticket with an empty issue.
-- If KNOWLEDGE CONTEXT is provided below, use it to answer the user's questions accurately. Base your answers on the provided context. If the context doesn't cover the question, say you don't have that information right now.
-
-Flow:
-1. Greet the caller and ask for their name.
-2. Ask them to describe their issue briefly.
-3. ONLY after you have both name AND issue, use the `manage_ticket` tool to log the ticket.
-4. If they give more information later, use the `manage_ticket` tool AGAIN with the same `ticket_id` to update the existing ticket. Do NOT create a new ticket.
-5. Confirm the ticket was created/updated and ask if there's anything else.
-
-Never give long explanations. Be concise and helpful.
-"""
-
-def manage_ticket_db(name: str, issue: str, urgency: str, ticket_id: Optional[int] = None) -> dict:
-    """Create or update a support ticket in the database."""
-    # Guard: reject tickets with no issue description
-    if not issue or not issue.strip():
+def manage_inquiry_db(name: str, inquiry_type: str, notes: str, ticket_id: Optional[int] = None) -> dict:
+    """Create or update a patient inquiry/booking in the database."""
+    if not notes or not notes.strip():
         return {
             "status": "rejected",
-            "message": "Cannot create a ticket without an issue description. Please ask the customer for their issue first."
+            "message": "Cannot create an inquiry without notes. Please ask the patient what they need."
         }
     
     db = SessionLocal()
     try:
+        # Re-using the SupportTicket table rows for inquiries
         if ticket_id:
             ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).first()
             if ticket:
                 ticket.customer_name = name
-                ticket.issue_description = issue
-                ticket.urgency = urgency
+                ticket.issue_description = f"[{inquiry_type}] {notes}"
                 db.commit()
                 db.refresh(ticket)
                 return {
                     "status": "success",
                     "action": "updated",
                     "ticket_id": ticket.id,
-                    "message": f"Support ticket #{ticket.id} updated."
+                    "message": f"Inquiry #{ticket.id} updated."
                 }
                 
         new_ticket = SupportTicket(
             customer_name=name,
-            issue_description=issue,
-            urgency=urgency,
+            issue_description=f"[{inquiry_type}] {notes}",
+            urgency="medium",
             created_at=datetime.now()
         )
         db.add(new_ticket)
@@ -74,10 +54,10 @@ def manage_ticket_db(name: str, issue: str, urgency: str, ticket_id: Optional[in
             "action": "created",
             "ticket_id": new_ticket.id,
             "created_at": new_ticket.created_at.isoformat(),
-            "message": f"Support ticket #{new_ticket.id} created for {name}."
+            "message": f"Inquiry logged for {name}."
         }
     except Exception as e:
-        logger.error(f"Failed to manage ticket: {e}")
+        logger.error(f"Failed to manage inquiry: {e}")
         return {"status": "error", "message": str(e)}
     finally:
         db.close()
@@ -87,30 +67,30 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "manage_ticket",
-            "description": "Create or update a customer support ticket to log the caller's issue.",
+            "name": "log_inquiry",
+            "description": "Log a patient inquiry, booking request, or callback request.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "The full name of the customer."
+                        "description": "The full name of the patient."
                     },
-                    "issue": {
+                    "inquiry_type": {
                         "type": "string",
-                        "description": "A comprehensive description of the customer's issue. Include accumulated details."
+                        "enum": ["booking", "general_question", "referral_query", "callback"],
+                        "description": "The category of the inquiry."
                     },
-                    "urgency": {
+                    "notes": {
                         "type": "string",
-                        "enum": ["low", "medium", "high", "emergency"],
-                        "description": "The estimated urgency level of the issue."
+                        "description": "A descriptive note of what the patient needs or scheduled."
                     },
                     "ticket_id": {
                         "type": "integer",
-                        "description": "The ID of an existing ticket to update (if you have already created one in this conversation)."
+                        "description": "The ID of an existing inquiry to update if you've already created one."
                     }
                 },
-                "required": ["name", "issue", "urgency"]
+                "required": ["name", "inquiry_type", "notes"]
             }
         }
     }
@@ -121,6 +101,20 @@ async def process_llm_turn(messages: List[Dict[str, Any]]) -> dict:
     
     # Build system prompt with optional RAG context
     system_prompt = SYSTEM_PROMPT
+    
+    # Find the latest user message for RAG retrieval
+    latest_user_msg = None
+    for m in reversed(messages):
+        if m.get("role") == "user":
+            latest_user_msg = m.get("content", "")
+            break
+    
+async def process_llm_turn(messages: List[Dict[str, Any]]) -> dict:
+    """Process a turn with the LLM and handle function calling if needed."""
+    
+    current_settings = load_settings()
+    system_prompt = current_settings.get("system_prompt")
+    temperature = current_settings.get("temperature", 0.7)
     
     # Find the latest user message for RAG retrieval
     latest_user_msg = None
@@ -154,7 +148,7 @@ async def process_llm_turn(messages: List[Dict[str, Any]]) -> dict:
             messages=messages,
             tools=TOOLS,
             tool_choice="auto",
-            temperature=0.7,
+            temperature=temperature,
             max_tokens=200,
         )
         
@@ -169,14 +163,14 @@ async def process_llm_turn(messages: List[Dict[str, Any]]) -> dict:
             for tool_call in tool_calls:
                 function_name = tool_call.function.name
                 
-                if function_name == "manage_ticket":
+                if function_name == "log_inquiry":
                     function_args = json.loads(tool_call.function.arguments)
                     logger.info(f"LLM called tool {function_name} with args: {function_args}")
                     
-                    function_response = manage_ticket_db(
+                    function_response = manage_inquiry_db(
                         name=function_args.get("name"),
-                        issue=function_args.get("issue"),
-                        urgency=function_args.get("urgency", "medium"),
+                        inquiry_type=function_args.get("inquiry_type", "general_question"),
+                        notes=function_args.get("notes"),
                         ticket_id=function_args.get("ticket_id")
                     )
                     
@@ -184,8 +178,8 @@ async def process_llm_turn(messages: List[Dict[str, Any]]) -> dict:
                         "name": function_name,
                         "result": {
                             "name": function_args.get("name"),
-                            "issue": function_args.get("issue"),
-                            "urgency": function_args.get("urgency", "medium"),
+                            "inquiry_type": function_args.get("inquiry_type"),
+                            "notes": function_args.get("notes"),
                             "id": function_response.get("ticket_id")
                         }
                     })
@@ -201,7 +195,7 @@ async def process_llm_turn(messages: List[Dict[str, Any]]) -> dict:
             second_response = await groq_client.chat.completions.create(
                 model=MODEL,
                 messages=messages,
-                temperature=0.7,
+                temperature=temperature,
                 max_tokens=200
             )
             return {
