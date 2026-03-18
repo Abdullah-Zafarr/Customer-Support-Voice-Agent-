@@ -170,7 +170,7 @@ def _split_into_sentences(text: str) -> list:
     return [s for s in sentences if s.strip()]
 
 
-async def get_tts_stream(text: str):
+async def get_tts_stream(text: str, voice: str = "en-AU-NatashaNeural"):
     """Generate TTS audio sentence-by-sentence for low-latency streaming."""
     try:
         sentences = _split_into_sentences(text)
@@ -180,7 +180,7 @@ async def get_tts_stream(text: str):
         for sentence in sentences:
             communicate = edge_tts.Communicate(
                 sentence,
-                voice="en-US-GuyNeural",
+                voice=voice,
             )
 
             # Collect MP3 for this sentence
