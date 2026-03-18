@@ -61,7 +61,7 @@ def _save_index():
 
 # ─── DOCUMENT LOADING ───
 def _read_file(filepath: str) -> str:
-    """Read text from .txt, .md, or .pdf files."""
+    """Read text from .txt, .md, .pdf, or .json files."""
     ext = os.path.splitext(filepath)[1].lower()
 
     if ext in (".txt", ".md"):
@@ -76,6 +76,14 @@ def _read_file(filepath: str) -> str:
             return text
         except ImportError:
             logger.warning("PyMuPDF not installed. Skipping PDF: " + filepath)
+            return ""
+    elif ext == ".json":
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return json.dumps(data, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to read JSON file {filepath}: {e}")
             return ""
     else:
         return ""
@@ -106,7 +114,7 @@ def ingest_documents(folder_path: str = None) -> dict:
         logger.warning(f"Knowledge directory not found: {folder}")
         return {"status": "error", "message": "Knowledge directory not found."}
 
-    supported_ext = {".txt", ".md", ".pdf"}
+    supported_ext = {".txt", ".md", ".pdf", ".json"}
     files = [
         os.path.join(folder, f)
         for f in os.listdir(folder)
