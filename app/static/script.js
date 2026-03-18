@@ -142,6 +142,15 @@ function setState(newState) {
     };
     waveformState.textContent = stateLabels[newState] || newState;
 
+    const micRipple = document.getElementById('mic-ripple');
+    if (micRipple) {
+        if (newState === STATE.LISTENING || newState === STATE.SPEAKING) {
+            micRipple.className = 'absolute inset-0 rounded-full bg-soul-teal/20 animate-ping opacity-100';
+        } else {
+            micRipple.className = 'absolute inset-0 rounded-full bg-soul-teal/20 opacity-0';
+        }
+    }
+
     // Color-code the state label
     const stateColors = {
         [STATE.IDLE]: '',
@@ -323,11 +332,11 @@ function addOrUpdateTicket(data) {
     const urgencyClass = `urgency-${data.urgency || 'medium'}`;
     const contentHTML = `
         <div class="flex justify-between items-center mb-1">
-            <span class="font-hud text-[10px] tracking-widest text-hud-cyan uppercase">#${String(ticketId).padStart(4, '0')}</span>
-            <span class="font-code text-[10px] text-text-muted">${data.urgency || 'medium'}</span>
+            <span class="text-xs font-bold text-soul-teal">#${String(ticketId).padStart(3, '0')}</span>
+            <span class="text-[10px] text-text-muted bg-gray-100 px-1.5 py-0.5 rounded">${data.inquiry_type || 'Inquiry'}</span>
         </div>
-        <div class="font-body text-sm text-text-primary truncate">${escapeHtml(data.name || 'Unknown')}</div>
-        <div class="font-body text-xs text-text-muted truncate mt-1">${escapeHtml(data.issue || 'No description')}</div>
+        <div class="font-medium text-sm text-text-primary truncate">${escapeHtml(data.name || 'Unknown')}</div>
+        <div class="text-xs text-text-muted truncate mt-1">${escapeHtml(data.notes || 'No description')}</div>
     `;
 
     if (existingCard) {
@@ -499,7 +508,7 @@ async function startCall() {
                         addTranscript('agent', msg.text);
                     } else if (msg.type === 'tool_call') {
                         addTranscript('system', `▶ Tool called: ${msg.name}`);
-                        if (msg.name === 'manage_ticket' && msg.result && msg.result.id) {
+                        if (msg.name === 'log_inquiry' && msg.result && msg.result.id) {
                             addOrUpdateTicket(msg.result);
                         }
                     }
@@ -571,6 +580,16 @@ callButton.addEventListener('click', () => {
     }
 });
 
+const micContainer = document.getElementById('mic-container');
+if (micContainer) {
+    micContainer.addEventListener('click', (e) => {
+        // Only trigger click if target is NOT callButton itself to avoid recursive loop
+        if (e.target.closest('#call-button') === null) {
+            callButton.click();
+        }
+    });
+}
+
 // ─── INIT ───
 drawWaveform();
 updateAnalyserData();
@@ -601,20 +620,19 @@ if (kbInput && uploadZone) {
     // Drag and Drop visual feedback
     uploadZone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        uploadZone.classList.add('border-hud-cyan', 'bg-hud-cyan/5');
+        uploadZone.classList.add('border-soul-teal', 'bg-soul-light-teal/40');
     });
 
     uploadZone.addEventListener('dragleave', (e) => {
         e.preventDefault();
-        uploadZone.classList.remove('border-hud-cyan', 'bg-hud-cyan/5');
+        uploadZone.classList.remove('border-soul-teal', 'bg-soul-light-teal/40');
     });
 
     uploadZone.addEventListener('drop', (e) => {
         e.preventDefault();
-        uploadZone.classList.remove('border-hud-cyan', 'bg-hud-cyan/5');
+        uploadZone.classList.remove('border-soul-teal', 'bg-soul-light-teal/40');
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            // Manually trigger upload since dropping on the container doesn't auto-fill the invisible input reliably
             uploadDocs(files);
         }
     });
@@ -622,15 +640,15 @@ if (kbInput && uploadZone) {
 
 if (reindexBtn) {
     reindexBtn.addEventListener('click', async () => {
-        setKBStatus('SYNCING...', 'amber', 30);
+        setKBStatus('SYNCING...', 'amber', 50);
         try {
             const resp = await fetch('/ingest', { method: 'POST' });
             const data = await resp.json();
-            setKBStatus('READY', 'emerald', 100);
+            setKBStatus('READY', 'teal', 100);
             addTranscript('system', `Knowledge Base synchronized: ${data.chunks} chunks found.`);
         } catch (err) {
             console.error('Re-index failed:', err);
-            setKBStatus('FAILED', 'rose', 0);
+            setKBStatus('FAILED', 'red', 0);
         }
     });
 }
@@ -638,9 +656,13 @@ if (reindexBtn) {
 function setKBStatus(text, colorClass, percent) {
     if (!kbStatus || !kbProgress) return;
     kbStatus.textContent = text;
-    kbStatus.className = `font-code text-[10px] text-hud-${colorClass}`;
+    // Map previous class colors loosely or apply colors manually
+    if (colorClass === 'emerald' || colorClass === 'teal') kbStatus.className = 'text-soul-teal';
+    else if (colorClass === 'amber') kbStatus.className = 'text-yellow-500';
+    else kbStatus.className = 'text-red-500';
+    
     kbProgress.style.width = `${percent}%`;
-    if (colorClass === 'emerald') {
+    if (percent === 100) {
         setTimeout(() => { kbProgress.style.width = '0%'; }, 2000);
     }
 }
@@ -661,15 +683,129 @@ async function uploadDocs(files) {
 
         if (resp.ok) {
             const data = await resp.json();
-            setKBStatus('READY', 'emerald', 100);
+            setKBStatus('READY', 'teal', 100);
             addTranscript('system', `Intelligence updated: ${data.message}`);
         } else {
             throw new Error('Upload failed');
         }
     } catch (err) {
         console.error('Upload error:', err);
-        setKBStatus('FAILED', 'rose', 0);
-        addTranscript('system', 'Knowledge Base upload failed. Check the server logs.');
+        setKBStatus('FAILED', 'red', 0);
+        addTranscript('system', 'Knowledge Base upload failed. Check general logs.');
     }
 }
+
+// ══════════════ ADMIN DASHBOARD LOGIC ══════════════
+const tabCall = document.getElementById('tab-call');
+const tabAdmin = document.getElementById('tab-admin');
+const viewCall = document.getElementById('view-call');
+const viewAdmin = document.getElementById('view-admin');
+const fileListContainer = document.getElementById('file-list-container');
+
+const cfgName = document.getElementById('cfg-name');
+const cfgVoice = document.getElementById('cfg-voice');
+const cfgTemp = document.getElementById('cfg-temp');
+const cfgPrompt = document.getElementById('cfg-prompt');
+const saveSettingsBtn = document.getElementById('save-settings-btn');
+const agentDisplayName = document.getElementById('agent-display-name');
+
+if (tabCall && tabAdmin && viewCall && viewAdmin) {
+    tabCall.addEventListener('click', () => {
+        viewCall.classList.remove('hidden');
+        viewAdmin.classList.add('hidden');
+        tabCall.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 bg-white text-soul-navy shadow-sm';
+        tabAdmin.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 text-white/80 hover:text-white';
+        if (typeof resizeCanvas === "function") resizeCanvas();
+    });
+
+    tabAdmin.addEventListener('click', () => {
+        viewCall.classList.add('hidden');
+        viewAdmin.classList.remove('hidden');
+        tabAdmin.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 bg-white text-soul-navy shadow-sm';
+        tabCall.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 text-white/80 hover:text-white';
+        loadKnowledgeFiles();
+    });
+}
+
+async function loadSettings() {
+    try {
+        const resp = await fetch('/api/settings');
+        const settings = await resp.json();
+        if (cfgName) cfgName.value = settings.agent_name || 'Aria';
+        if (cfgVoice) cfgVoice.value = settings.voice || 'en-AU-NatashaNeural';
+        if (cfgTemp) cfgTemp.value = settings.temperature !== undefined ? settings.temperature : 0.7;
+        if (cfgPrompt) cfgPrompt.value = settings.system_prompt || '';
+        if (agentDisplayName) agentDisplayName.textContent = `${settings.agent_name || 'Aria'} — AI Receptionist`;
+    } catch (err) { console.error('Failed to load settings:', err); }
+}
+
+if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', async () => {
+        saveSettingsBtn.textContent = 'Saving...';
+        const payload = {
+            agent_name: cfgName.value.trim(),
+            voice: cfgVoice.value,
+            temperature: parseFloat(cfgTemp.value),
+            system_prompt: cfgPrompt.value.trim()
+        };
+        try {
+            const resp = await fetch('/api/settings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (resp.ok) {
+                if (agentDisplayName) agentDisplayName.textContent = `${payload.agent_name} — AI Receptionist`;
+                addTranscript('system', '✅ Settings saved successfully.');
+            }
+        } catch (err) { alert('Failed to save settings.'); }
+        finally { saveSettingsBtn.textContent = 'Save Configuration'; }
+    });
+}
+
+async function loadKnowledgeFiles() {
+    if (!fileListContainer) return;
+    try {
+        const resp = await fetch('/api/knowledge-files');
+        const files = await resp.json();
+        if (files.length === 0) {
+            fileListContainer.innerHTML = `<div class="text-center py-10 text-text-muted text-xs">No documents uploaded yet.</div>`;
+            return;
+        }
+        fileListContainer.innerHTML = files.map(filename => {
+            const ext = filename.split('.').pop().toUpperCase();
+            return `
+                <div class="flex items-center justify-between bg-soul-light-teal/50 p-3 rounded-lg hover:border-soul-teal/40 border border-transparent transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center font-bold text-xs">${ext}</div>
+                        <span class="text-xs font-semibold text-text-primary truncate max-w-[180px]">${filename}</span>
+                    </div>
+                    <button class="text-red-500 hover:text-red-700 p-1 delete-file-btn" data-name="${filename}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            `;
+        }).join('');
+        document.querySelectorAll('.delete-file-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const name = btn.getAttribute('data-name');
+                if (confirm(`Delete file "${name}"?`)) await deleteFile(name);
+            });
+        });
+    } catch (err) { }
+}
+
+async function deleteFile(filename) {
+    try {
+        const resp = await fetch(`/api/knowledge-files/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+        if (resp.ok) { loadKnowledgeFiles(); addTranscript('system', `🗑️ Deleted file: ${filename}`); }
+    } catch (err) { }
+}
+
+// Override direct upload output to list
+const originalUploadDocs = uploadDocs;
+uploadDocs = async (files) => { await originalUploadDocs(files); loadKnowledgeFiles(); }
+
+document.addEventListener('DOMContentLoaded', () => { loadSettings(); loadKnowledgeFiles(); });
+loadSettings(); loadKnowledgeFiles();
 
