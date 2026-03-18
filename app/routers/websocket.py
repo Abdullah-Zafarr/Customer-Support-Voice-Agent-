@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 
 from ..services.whisper_client import setup_stt, get_tts_stream
 from ..services.agent import process_llm_turn
+from ..services.settings_manager import load_settings
 from ..core.logger import logger
 
 router = APIRouter()
@@ -34,11 +35,15 @@ async def websocket_endpoint(websocket: WebSocket):
             # Send message to client to flush audio buffers
             await websocket.send_json({"type": "clear_audio"})
             
+        # Add to history
         messages.append({"role": "user", "content": transcript})
         tts_task = asyncio.create_task(process_and_speak())
 
     async def process_and_speak():
         try:
+            current_settings = load_settings()
+            current_voice = current_settings.get("voice", "en-AU-NatashaNeural")
+            
             # Get response from Groq (now returns dict with response + tool_calls)
             result = await process_llm_turn(messages)
             llm_response = result["response"]
@@ -59,7 +64,7 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.send_json({"type": "response", "text": llm_response})
             
             # Stream TTS chunks to client (Edge TTS produces MP3 chunks)
-            async for audio_chunk in get_tts_stream(llm_response):
+            async for audio_chunk in get_tts_stream(llm_response, voice=current_voice):
                 await websocket.send_bytes(audio_chunk)
                 
             await websocket.send_json({"type": "tts_complete"})
