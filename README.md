@@ -1,6 +1,12 @@
 # 🎙️ AI Voice Agent — Mission Control
 
-![AI Voice Agent Interface Screenshot](assets/interface.PNG)
+![AI Voice Agent Interface Screenshot](assets/screenshot%203.PNG)
+
+## 💸 Why Build Custom? (90% Cost Reduction)
+
+By bypassing managed Voice-AI platforms like Retell AI, Vapi, or Synthflow, this architecture minimizes high inference markup multipliers. Exposing local Whisper layouts and direct Async generators consumes up to **90% less operating expense metrics** for scaled customer support dashboards.
+
+![Cost Breakdown Comparison](assets/cost%20breakdown%203rd%20party%20vs%20owning%20it.PNG)
 
 ## 🏗️ System Architecture
 
