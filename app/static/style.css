@@ -1,37 +1,15 @@
 /* ═══════════════════════════════════════════════════════════
-   VOICE AGENT — MISSION CONTROL CONSOLE
-   HUD / Sci-Fi FUI Stylesheet
+   VOICE AGENT — SOUL IMAGING CLINICAL STYLES
    ═══════════════════════════════════════════════════════════ */
 
-/* ─── BASE RESET ─── */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-:root {
-    --bg-void: #050510;
-    --bg-panel: rgba(0, 255, 255, 0.04);
-    --border-grid: rgba(0, 255, 255, 0.12);
-    --border-active: rgba(0, 255, 255, 0.3);
-    --accent-cyan: #00FFFF;
-    --accent-emerald: #00E676;
-    --accent-amber: #FFB300;
-    --accent-rose: #FF3D71;
-    --text-primary: #E0E0FF;
-    --text-muted: rgba(224, 224, 255, 0.5);
-    --glow-cyan: 0 0 10px rgba(0, 255, 255, 0.3), 0 0 30px rgba(0, 255, 255, 0.1);
-    --glow-emerald: 0 0 10px rgba(0, 230, 118, 0.3), 0 0 30px rgba(0, 230, 118, 0.1);
-    --glow-rose: 0 0 10px rgba(255, 61, 113, 0.3), 0 0 30px rgba(255, 61, 113, 0.1);
-    --glow-amber: 0 0 10px rgba(255, 179, 0, 0.3), 0 0 30px rgba(255, 179, 0, 0.1);
+body {
+    background-color: #F4F7F9;
+    color: #1A2A3A;
 }
 
 /* ─── SCROLLBAR ─── */
 ::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -39,288 +17,55 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--border-grid);
-    border-radius: 0;
+    background: #E0E6ED;
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--border-active);
+    background: #CBD5E1;
 }
 
-/* ─── HUD PANELS ─── */
-.hud-panel {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-grid);
-    border-radius: 0;
-    position: relative;
-    transition: border-color 0.3s ease;
-}
-
-.hud-panel:hover {
-    border-color: var(--border-active);
-}
-
-/* Corner tick marks on panels */
-.hud-panel::before,
-.hud-panel::after {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    border-color: var(--accent-cyan);
-    opacity: 0.4;
-    pointer-events: none;
-}
-
-.hud-panel::before {
-    top: -1px;
-    left: -1px;
-    border-top: 1px solid;
-    border-left: 1px solid;
-}
-
-.hud-panel::after {
-    bottom: -1px;
-    right: -1px;
-    border-bottom: 1px solid;
-    border-right: 1px solid;
-}
-
-/* ─── SECTION TITLES ─── */
-.hud-section-title {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--accent-cyan);
-    opacity: 0.7;
-}
-
-/* ─── STATUS DOTS ─── */
-.status-dot {
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.status-dot.active {
-    background-color: var(--accent-emerald) !important;
-    box-shadow: var(--glow-emerald);
-}
-
-.status-dot.warning {
-    background-color: var(--accent-amber) !important;
-    box-shadow: var(--glow-amber);
-    animation: pulse-dot 2s ease-in-out infinite;
-}
-
-.status-dot.error {
-    background-color: var(--accent-rose) !important;
-    box-shadow: var(--glow-rose);
-}
-
-.status-dot.connected {
-    background-color: var(--accent-emerald) !important;
-    box-shadow: var(--glow-emerald);
-    animation: pulse-dot 2s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.4;
-    }
-}
-
-/* ─── HUD CALL BUTTON ─── */
-.hud-button {
-    background: transparent;
-    color: var(--accent-cyan);
-    border: 1px solid var(--accent-cyan);
-    position: relative;
-    overflow: hidden;
-}
-
-.hud-button::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.08) 0%, transparent 50%);
-    transition: opacity 0.3s ease;
-}
-
-.hud-button:hover {
-    background: rgba(0, 255, 255, 0.08);
-    box-shadow: var(--glow-cyan);
-    transform: translateY(-1px);
-}
-
-.hud-button:active {
-    transform: translateY(0);
-}
-
-/* Active call state */
-.hud-button.active {
-    color: var(--accent-rose);
-    border-color: var(--accent-rose);
-}
-
-.hud-button.active:hover {
-    background: rgba(255, 61, 113, 0.08);
-    box-shadow: var(--glow-rose);
-}
-
-.hud-button.active::before {
-    background: linear-gradient(135deg, rgba(255, 61, 113, 0.08) 0%, transparent 50%);
-}
-
-/* Connecting state */
-.hud-button.connecting {
-    color: var(--accent-amber);
-    border-color: var(--accent-amber);
-    animation: border-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes border-pulse {
-
-    0%,
-    100% {
-        border-color: var(--accent-amber);
-    }
-
-    50% {
-        border-color: rgba(255, 179, 0, 0.3);
-    }
-}
-
-/* ─── HUD LOGO ─── */
-.hud-logo {
-    border-radius: 0;
-    position: relative;
-}
-
-.hud-logo::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border: 1px solid rgba(0, 255, 255, 0.08);
-}
-
-/* ─── TRANSCRIPT LINES ─── */
-.transcript-line {
-    display: flex;
-    align-items: flex-start;
-    padding: 6px 8px;
-    border-radius: 0;
-    border-left: 2px solid transparent;
-    transition: background-color 0.2s ease;
-    animation: transcript-in 0.3s ease-out;
-}
-
-.transcript-line:hover {
-    background: rgba(0, 255, 255, 0.03);
-}
-
-.transcript-line[data-type="user"] {
-    border-left-color: var(--accent-cyan);
-}
-
-.transcript-line[data-type="agent"] {
-    border-left-color: var(--accent-emerald);
-}
-
-.transcript-line[data-type="system"] {
-    border-left-color: var(--accent-amber);
-}
-
-.transcript-line[data-type="error"] {
-    border-left-color: var(--accent-rose);
-}
-
-@keyframes transcript-in {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ─── TICKET CARDS ─── */
+/* ─── TICKET CARDS / INQUIRIES ─── */
 .ticket-card {
-    background: rgba(0, 255, 255, 0.03);
-    border: 1px solid var(--border-grid);
-    padding: 10px 12px;
-    transition: border-color 0.2s ease;
-    animation: transcript-in 0.3s ease-out;
+    background: #FFFFFF;
+    border-radius: 8px;
+    border: 1px solid #E5E9F0;
+    padding: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    animation: opacity-in 0.3s ease-out;
 }
 
 .ticket-card:hover {
-    border-color: var(--border-active);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
 
-.urgency-low {
-    border-left: 2px solid var(--accent-cyan);
+.urgency-low { border-left: 4px solid #00A8A8; }
+.urgency-medium { border-left: 4px solid #E2A100; }
+.urgency-high { border-left: 4px solid #EF4444; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes opacity-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.urgency-medium {
-    border-left: 2px solid var(--accent-amber);
+@keyframes pulse-light {
+    0% { box-shadow: 0 0 0 0 rgba(0, 168, 168, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 168, 168, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 168, 168, 0); }
 }
 
-.urgency-high {
-    border-left: 2px solid var(--accent-rose);
+.mic-active {
+    animation: pulse-light 2s infinite;
 }
 
-.urgency-emergency {
-    border-left: 2px solid var(--accent-rose);
-    animation: pulse-dot 1s ease-in-out infinite;
-}
-
-/* ─── WAVEFORM CANVAS ─── */
+/* canvas settings for wave rendering */
 #waveform-canvas {
-    image-rendering: pixelated;
+    background: transparent;
 }
 
-/* ─── REDUCED MOTION ─── */
-@media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-
-    .status-dot.connected,
-    .status-dot.warning {
-        animation: none;
-    }
-}
-
-/* ─── SCANLINE OVERLAY (subtle) ─── */
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    background: repeating-linear-gradient(0deg,
-            transparent,
-            transparent 2px,
-            rgba(0, 0, 0, 0.03) 2px,
-            rgba(0, 0, 0, 0.03) 4px);
-}
-
-/* ─── MOBILE ADJUSTMENTS ─── */
-@media (max-width: 1023px) {
-    main {
-        overflow-y: auto;
-    }
+/* standard inputs for admin textareas */
+textarea#cfg-prompt {
+    font-family: inherit;
+    line-height: 1.6;
 }
