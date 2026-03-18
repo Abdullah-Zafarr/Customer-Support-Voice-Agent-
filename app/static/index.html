@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Agent — Mission Control</title>
-    <meta name="description"
-        content="AI-powered customer support voice agent with real-time speech-to-text, LLM reasoning, and text-to-speech.">
+    <title>Soul Imaging — AI Receptionist</title>
+    <meta name="description" content="Empathetic AI-powered voice assistant for Soul Imaging Clinic.">
 
     <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,20 +14,17 @@
             theme: {
                 extend: {
                     colors: {
-                        void: '#050510',
-                        panel: 'rgba(0, 255, 255, 0.04)',
-                        'grid-line': 'rgba(0, 255, 255, 0.12)',
-                        'hud-cyan': '#00FFFF',
-                        'hud-emerald': '#00E676',
-                        'hud-amber': '#FFB300',
-                        'hud-rose': '#FF3D71',
-                        'text-primary': '#E0E0FF',
-                        'text-muted': 'rgba(224, 224, 255, 0.5)',
+                        'soul-navy': '#0A2540',
+                        'soul-teal': '#00A8A8',
+                        'soul-light-teal': '#E5F6F6',
+                        'soul-bg': '#F4F7F9',
+                        'soul-panel': '#FFFFFF',
+                        'text-primary': '#1A2A3A',
+                        'text-muted': '#6B7C93',
                     },
                     fontFamily: {
-                        hud: ['"Share Tech Mono"', 'monospace'],
+                        sans: ['"Outfit"', '"Inter"', 'sans-serif'],
                         code: ['"Fira Code"', 'monospace'],
-                        body: ['"IBM Plex Sans"', 'sans-serif'],
                     },
                 },
             },
@@ -38,255 +34,239 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Share+Tech+Mono&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="/static/style.css?v=2">
+    <link rel="stylesheet" href="/static/style.css?v=fresh">
 </head>
 
-<body class="bg-void text-text-primary font-body min-h-screen flex flex-col antialiased">
+<body class="bg-soul-bg text-text-primary font-sans min-h-screen flex flex-col antialiased">
 
     <!-- ═══════════ HEADER BAR ═══════════ -->
-    <header class="border-b border-grid-line px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
+    <header class="bg-soul-navy text-white px-6 py-4 flex items-center justify-between flex-shrink-0 shadow-md">
         <div class="flex items-center gap-3">
-            <!-- HUD Logo Mark -->
-            <div class="hud-logo w-8 h-8 border border-hud-cyan flex items-center justify-center" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                    class="text-hud-cyan">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                    <path d="M2 17l10 5 10-5" />
-                    <path d="M2 12l10 5 10-5" />
+            <div class="w-10 h-10 rounded-full bg-soul-teal flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                 </svg>
             </div>
             <div>
-                <h1 class="font-hud text-xs tracking-[0.25em] text-hud-cyan uppercase">Voice Agent</h1>
-                <span class="font-hud text-[10px] tracking-[0.15em] text-text-muted uppercase">v1.0 — Mission
-                    Control</span>
+                <h1 class="font-bold text-lg tracking-wide leading-tight">Soul Imaging</h1>
+                <span id="agent-display-name" class="text-xs text-soul-teal tracking-wider uppercase font-medium">Loading config...</span>
             </div>
         </div>
 
-        <div class="flex items-center gap-4 sm:gap-6">
-            <!-- Latency -->
-            <div class="hidden sm:flex items-center gap-2" aria-label="System latency">
-                <span class="font-hud text-[10px] tracking-widest text-text-muted uppercase">Latency</span>
-                <span id="latency-value" class="font-code text-sm text-hud-cyan tabular-nums">—ms</span>
+        <div class="flex items-center gap-6">
+            <!-- Navigation Tabs -->
+            <nav class="flex gap-1 bg-white/10 p-1 rounded-lg mr-4">
+                <button id="tab-call" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 bg-white text-soul-navy shadow-sm">
+                    Voice Assistant
+                </button>
+                <button id="tab-admin" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 text-white/80 hover:text-white">
+                    Admin Dashboard
+                </button>
+            </nav>
+
+            <div class="hidden sm:flex items-center gap-2 text-white/60">
+                <span class="text-xs uppercase tracking-wider">Latency</span>
+                <span id="latency-value" class="font-code text-sm text-soul-teal tabular-nums">—ms</span>
             </div>
-            <!-- Connection Status -->
-            <div class="flex items-center gap-2" role="status" aria-live="polite">
-                <span id="connection-dot" class="status-dot w-2 h-2 rounded-full bg-hud-rose"></span>
-                <span id="connection-label"
-                    class="font-hud text-[10px] tracking-[0.2em] uppercase text-text-muted">Disconnected</span>
+            <div class="flex items-center gap-2">
+                <span id="connection-dot" class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                <span id="connection-label" class="text-xs uppercase tracking-wider text-white/80">Offline</span>
             </div>
         </div>
     </header>
 
-    <!-- ═══════════ MAIN GRID ═══════════ -->
-    <main class="flex-1 p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 overflow-hidden">
+    <!-- ═══════════ VIEW 1: VOICE CALL ═══════════ -->
+    <main id="view-call" class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
+        
+        <!-- Left Column: Metrics & Visualizer -->
+        <section class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- Audio Visualizer Panel -->
+            <div class="bg-soul-panel rounded-xl shadow-sm p-8 flex flex-col items-center justify-center relative flex-1 min-h-[300px]">
+                <h2 class="absolute top-6 left-6 text-sm font-bold text-soul-navy uppercase tracking-wider">Live Audio I/O</h2>
 
-        <!-- ─── LEFT COLUMN: System Status ─── -->
-        <section class="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
-            <!-- System Status Panel -->
-            <div class="hud-panel p-4 flex-shrink-0" role="region" aria-label="System Status">
-                <h2 class="hud-section-title mb-3">System Status</h2>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span id="stt-dot" class="status-dot w-2 h-2 rounded-full bg-text-muted"></span>
-                            <span class="font-hud text-[11px] tracking-widest uppercase text-text-muted">STT
-                                Engine</span>
+                <!-- Centered Call Button & Waveform -->
+                <div class="flex flex-col items-center justify-center gap-6 w-full max-w-lg">
+                    <div id="mic-container" class="w-28 h-28 rounded-full bg-soul-light-teal flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 relative">
+                        <!-- Ripple Effect -->
+                        <div id="mic-ripple" class="absolute inset-0 rounded-full bg-soul-teal/20 animate-ping opacity-0"></div>
+                        
+                        <button id="call-button" class="w-20 h-20 rounded-full bg-soul-teal text-white flex items-center justify-center shadow-lg transition-all duration-300 focus:outline-none">
+                            <svg id="mic-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                <line x1="12" y1="19" x2="12" y2="22"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div id="waveform-state" class="text-sm font-medium text-text-muted mt-2">
+                        Click microphone to introduce yourself
+                    </div>
+
+                    <!-- Waveform Canvas -->
+                    <div class="w-full h-20 relative">
+                        <canvas id="waveform-canvas" class="w-full h-full"></canvas>
+                        <div class="absolute inset-y-0 left-0 right-0 flex items-center pointer-events-none">
+                            <div class="w-full h-px bg-soul-teal/10"></div>
                         </div>
-                        <span id="stt-status" class="font-code text-[11px] text-text-muted">OFFLINE</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span id="llm-dot" class="status-dot w-2 h-2 rounded-full bg-text-muted"></span>
-                            <span class="font-hud text-[11px] tracking-widest uppercase text-text-muted">LLM Core</span>
-                        </div>
-                        <span id="llm-status" class="font-code text-[11px] text-text-muted">OFFLINE</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span id="tts-dot" class="status-dot w-2 h-2 rounded-full bg-text-muted"></span>
-                            <span class="font-hud text-[11px] tracking-widest uppercase text-text-muted">TTS
-                                Output</span>
-                        </div>
-                        <span id="tts-status" class="font-code text-[11px] text-text-muted">OFFLINE</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span id="db-dot" class="status-dot w-2 h-2 rounded-full bg-text-muted"></span>
-                            <span class="font-hud text-[11px] tracking-widest uppercase text-text-muted">Database</span>
-                        </div>
-                        <span id="db-status" class="font-code text-[11px] text-text-muted">OFFLINE</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Agent Metrics -->
-            <div class="hud-panel p-4 flex-1" role="region" aria-label="Agent Metrics">
-                <h2 class="hud-section-title mb-4">Agent Metrics</h2>
-                <div class="space-y-4">
-                    <div>
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted block mb-1">Session
-                            Duration</span>
-                        <span id="metric-duration" class="font-code text-2xl text-hud-cyan tabular-nums">00:00</span>
-                    </div>
-                    <div>
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted block mb-1">Messages
-                            Exchanged</span>
-                        <span id="metric-messages" class="font-code text-2xl text-hud-cyan tabular-nums">0</span>
-                    </div>
-                    <div>
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted block mb-1">Tickets
-                            Created</span>
-                        <span id="metric-tickets" class="font-code text-2xl text-hud-emerald tabular-nums">0</span>
-                    </div>
-                    <div>
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted block mb-1">Current
-                            State</span>
-                        <span id="metric-state"
-                            class="font-hud text-sm tracking-widest uppercase text-text-muted">IDLE</span>
-                    </div>
-                </div>
-            </div>
-            <!-- Knowledge Base (RAG) -->
-            <div class="hud-panel p-4 flex flex-col" role="region" aria-label="Knowledge Base">
-                <h2 class="hud-section-title mb-3">Knowledge Base</h2>
-                <p class="font-body text-[11px] text-text-muted mb-4 leading-relaxed">
-                    Upload documents (.txt, .md, .pdf) to ground the AI's responses in specific documentation.
-                </p>
-
-                <div id="upload-zone"
-                    class="border border-dashed border-grid-line p-5 rounded-sm text-center transition-all duration-300 hover:border-hud-cyan group cursor-pointer relative overflow-hidden">
-                    <input type="file" id="kb-file-input" class="absolute inset-0 opacity-0 cursor-pointer"
-                        accept=".txt,.md,.pdf" multiple>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                        class="mx-auto mb-2 text-text-muted group-hover:text-hud-cyan transition-colors">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    <span
-                        class="font-hud text-[10px] tracking-widest text-text-muted transition-colors group-hover:text-hud-cyan uppercase block">Drop
-                        files or click</span>
-                </div>
-
-                <!-- Active Index Status -->
-                <div class="mt-4 pt-4 border-t border-grid-line">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="font-hud text-[10px] tracking-widest text-text-muted uppercase">Index Status</span>
-                        <span id="kb-status" class="font-code text-[10px] text-hud-emerald">READY</span>
-                    </div>
-                    <div class="w-full h-1 bg-grid-line overflow-hidden">
-                        <div id="kb-progress" class="w-0 h-full bg-hud-cyan transition-all duration-500"></div>
-                    </div>
-                    <button id="reindex-button"
-                        class="mt-3 w-full border border-hud-cyan/20 hover:border-hud-cyan/60 py-1.5 font-hud text-[10px] tracking-widest text-hud-cyan uppercase transition-all duration-300">
-                        Synchronize Index
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ─── CENTER COLUMN: Waveform + Transcript ─── -->
-        <section class="lg:col-span-6 flex flex-col gap-3 sm:gap-4 min-h-0">
-            <!-- Voice Waveform Visualizer -->
-            <div class="hud-panel p-4 sm:p-6 flex flex-col items-center justify-center relative flex-shrink-0"
-                role="region" aria-label="Voice Waveform Visualizer">
-                <h2 class="hud-section-title absolute top-4 left-4">Audio I/O</h2>
-
-                <!-- Waveform Canvas -->
-                <div class="w-full h-28 sm:h-36 relative my-2">
-                    <canvas id="waveform-canvas" class="w-full h-full"></canvas>
-                    <!-- Center line -->
-                    <div class="absolute inset-y-0 left-0 right-0 flex items-center pointer-events-none">
-                        <div class="w-full h-px bg-grid-line"></div>
-                    </div>
-                </div>
-
-                <!-- State label -->
-                <div id="waveform-state"
-                    class="font-hud text-[10px] tracking-[0.3em] uppercase text-text-muted mt-1 transition-colors duration-300">
-                    AWAITING INPUT
-                </div>
-
-                <!-- Call Button -->
-                <button id="call-button"
-                    class="hud-button mt-4 px-8 py-3 font-hud text-sm tracking-[0.2em] uppercase cursor-pointer transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-hud-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-void"
-                    aria-label="Start voice call">
-                    <span id="call-button-text">Initialize Call</span>
-                </button>
             </div>
 
             <!-- Live Transcript -->
-            <div class="hud-panel p-4 flex-1 flex flex-col min-h-0" role="log" aria-label="Live Transcript"
-                aria-live="polite">
-                <h2 class="hud-section-title mb-3 flex-shrink-0">Live Transcript</h2>
-                <div id="transcript-container" class="flex-1 overflow-y-auto space-y-1 min-h-0 scroll-smooth">
-                    <!-- Welcome message -->
-                    <div class="transcript-line" data-type="system">
-                        <span class="font-code text-[11px] text-text-muted tabular-nums mr-3">--:--:--</span>
-                        <span class="font-hud text-[10px] tracking-widest text-hud-amber mr-2">[SYS]</span>
-                        <span class="font-body text-sm text-text-muted">Voice Agent initialized. Click "Initialize Call"
-                            to begin.</span>
+            <div class="bg-soul-panel rounded-xl shadow-sm p-6 flex-1 flex flex-col min-h-0">
+                <h2 class="text-sm font-bold text-soul-navy uppercase tracking-wider mb-4">Live Transcript</h2>
+                <div id="transcript-container" class="flex-1 overflow-y-auto space-y-3 min-h-0 scroll-smooth pr-2">
+                    <!-- Welcome Line -->
+                    <div class="flex items-start gap-3 bg-soul-light-teal/50 p-3 rounded-lg">
+                        <span class="font-code text-xs text-text-muted mt-0.5">--:--</span>
+                        <div class="flex-1">
+                            <span class="block text-xs font-bold text-soul-teal uppercase">System</span>
+                            <p class="text-sm text-text-primary mt-0.5">Welcome to the Soul Imaging AI Voice Assistant. Press start to speak.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ─── RIGHT COLUMN: Tickets ─── -->
-        <section class="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
-            <!-- Support Tickets -->
-            <div class="hud-panel p-4 flex-1 flex flex-col min-h-0" role="region" aria-label="Support Tickets">
-                <h2 class="hud-section-title mb-3 flex-shrink-0">Support Tickets</h2>
-                <div id="tickets-container" class="flex-1 overflow-y-auto space-y-2 min-h-0">
-                    <div class="text-center py-8">
-                        <span class="font-hud text-[10px] tracking-widest text-text-muted uppercase">No tickets
-                            yet</span>
+        <!-- Right Column: Context/Logged Inquiries -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+            <!-- System Status Cards -->
+            <div class="bg-soul-panel rounded-xl shadow-sm p-6">
+                <h2 class="text-sm font-bold text-soul-navy uppercase tracking-wider mb-4">Session Statistics</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-soul-light-teal p-3 rounded-lg text-center">
+                        <span class="text-[11px] font-bold text-soul-teal uppercase tracking-wider">Duration</span>
+                        <div id="metric-duration" class="font-bold text-xl text-soul-navy mt-1">00:00</div>
+                    </div>
+                    <div class="bg-soul-light-teal p-3 rounded-lg text-center">
+                        <span class="text-[11px] font-bold text-soul-teal uppercase tracking-wider">Messages</span>
+                        <div id="metric-messages" class="font-bold text-xl text-soul-navy mt-1">0</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Info -->
-            <div class="hud-panel p-4 flex-shrink-0" role="region" aria-label="Agent Information">
-                <h2 class="hud-section-title mb-3">Agent Config</h2>
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted">Model</span>
-                        <span class="font-code text-[11px] text-hud-cyan">Llama 3.3 70B</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted">STT</span>
-                        <span class="font-code text-[11px] text-hud-cyan">Faster-Whisper</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted">TTS</span>
-                        <span class="font-code text-[11px] text-hud-cyan">Edge TTS</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted">Inference</span>
-                        <span class="font-code text-[11px] text-hud-cyan">Groq Cloud</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="font-hud text-[10px] tracking-widest uppercase text-text-muted">Domain</span>
-                        <span class="font-code text-[11px] text-hud-amber">Customer Support</span>
+            <!-- Logged Patient Inquiries (Replaces Tickets) -->
+            <div class="bg-soul-panel rounded-xl shadow-sm p-6 flex-1 flex flex-col min-h-0">
+                <h2 class="text-sm font-bold text-soul-navy uppercase tracking-wider mb-4">Logged Inquiries</h2>
+                <div id="tickets-container" class="flex-1 overflow-y-auto space-y-3 min-h-0 pr-1">
+                    <div class="text-center py-10">
+                        <div class="text-soul-teal/20 mx-auto mb-2">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs text-text-muted">No inquiries logged yet</span>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- ═══════════ FOOTER ═══════════ -->
-    <footer class="border-t border-grid-line px-4 sm:px-6 py-2 flex items-center justify-between flex-shrink-0">
-        <span class="font-hud text-[9px] tracking-[0.2em] text-text-muted uppercase">Voice Agent — Portfolio
-            Project</span>
-        <span class="font-hud text-[9px] tracking-[0.2em] text-text-muted uppercase">STT → LLM → TTS Pipeline</span>
-    </footer>
+    <!-- ═══════════ VIEW 2: ADMIN DASHBOARD ═══════════ -->
+    <main id="view-admin" class="hidden flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
+        <!-- Left Panel: Configurations -->
+        <section class="lg:col-span-7 flex flex-col gap-6 overflow-y-auto pr-2">
+            
+            <!-- Agent Identity Form -->
+            <div class="bg-soul-panel rounded-xl shadow-sm p-6">
+                <h2 class="text-lg font-bold text-soul-navy mb-4">Agent Configuration</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary mb-1">Agent Name</label>
+                        <input type="text" id="cfg-name" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-soul-teal outline-none" value="Aria">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-text-primary mb-1">Voice Profile</label>
+                            <select id="cfg-voice" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-soul-teal outline-none bg-white">
+                                <option value="en-AU-NatashaNeural">Female (Aussie - Natasha)</option>
+                                <option value="en-AU-AnnetteNeural">Female (Aussie - Annette)</option>
+                                <option value="en-AU-WilliamNeural">Male (Aussie - William)</option>
+                                <option value="en-UK-SoniaNeural">Female (British - Sonia)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-primary mb-1">Creativity (Temp)</label>
+                            <input type="range" id="cfg-temp" min="0" max="1" step="0.1" value="0.7" class="w-full mt-2 accent-soul-teal">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Prompt Settings -->
+            <div class="bg-soul-panel rounded-xl shadow-sm p-6 flex-1 flex flex-col">
+                <label class="block text-lg font-bold text-soul-navy mb-2">System Instructions</label>
+                <span class="text-xs text-text-muted mb-4 block">Tailor how the agent behaves, answers, and speaks to patients.</span>
+                
+                <textarea id="cfg-prompt" class="w-full flex-1 border border-gray-200 rounded-lg p-4 text-sm font-sans focus:border-soul-teal outline-none resize-none mb-4" placeholder="Type instructions here..."></textarea>
+                
+                <button id="save-settings-btn" class="self-end bg-soul-teal text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-soul-teal/90 transition-colors">
+                    Save Configuration
+                </button>
+            </div>
+        </section>
+
+        <!-- Right Panel: Knowledge Base Files -->
+        <section class="lg:col-span-5 flex flex-col gap-6 overflow-hidden">
+            <div class="bg-soul-panel rounded-xl shadow-sm p-6 flex flex-col h-full overflow-hidden">
+                <h2 class="text-lg font-bold text-soul-navy mb-2">Knowledge Base</h2>
+                <span class="text-xs text-text-muted mb-4 block">Upload `.txt`, `.md`, `.pdf`, or `.json` groundings for the AI.</span>
+
+                <!-- Drag & Drop Zone -->
+                <div id="upload-zone" class="border border-dashed border-gray-200 rounded-xl p-6 text-center transition-all duration-200 hover:border-soul-teal hover:bg-soul-light-teal/40 cursor-pointer relative group">
+                    <input type="file" id="kb-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept=".txt,.md,.pdf,.json" multiple>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-2 text-text-muted group-hover:text-soul-teal">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span class="font-medium text-sm text-text-primary block">Drop files or click to upload</span>
+                    <span class="text-[10px] text-text-muted">Maximum 10MB per file</span>
+                </div>
+
+                <!-- Sync Control -->
+                <div class="flex items-center justify-between gap-4 mt-4 border-b border-gray-100 pb-4">
+                    <div>
+                        <span class="text-xs font-bold text-text-primary">Status: <span id="kb-status" class="text-soul-teal">READY</span></span>
+                        <div class="h-1 bg-gray-100 w-32 rounded-full overflow-hidden mt-1">
+                            <div id="kb-progress" class="w-0 h-full bg-soul-teal transition-all duration-300"></div>
+                        </div>
+                    </div>
+                    <button id="reindex-button" class="border border-soul-teal/30 hover:border-soul-teal px-4 py-1.5 rounded-lg text-xs font-medium text-soul-teal bg-white transition-colors">
+                        Re-Index Engine
+                    </button>
+                </div>
+
+                <!-- Active Document List -->
+                <div class="flex-1 overflow-y-auto mt-4 space-y-2" id="file-list-container">
+                    <!-- Loaded dynamically from /api/knowledge-files -->
+                    <div class="text-center py-10 text-text-muted text-xs">Loading loaded documents...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- HIDDEN STATUS FLAGS FOR SCRIPT LOGIC REUSE -->
+    <div class="hidden">
+        <span id="stt-dot"></span><span id="llm-dot"></span><span id="tts-dot"></span><span id="db-dot"></span>
+        <span id="stt-status"></span><span id="llm-status"></span><span id="tts-status"></span><span id="db-status"></span>
+        <span id="metric-tickets"></span><span id="metric-state"></span>
+        <span id="call-button-text"></span>
+    </div>
 
     <!-- Dashboard JS -->
-    <script src="/static/script.js?v=5"></script>
+    <script src="/static/script.js?v=fresh2"></script>
 </body>
 
 </html>
