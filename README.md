@@ -116,4 +116,6 @@ The agent is equipped with a custom-built RAG engine that allows it to act as a 
 
 ## 📄 License
 
-MIT License. Built as a portfolio project.
+Copyright (c) 2026 **BRICLIX**. All rights reserved.
+
+Proprietary and Confidential. No part of this repository may be copied, modified, or distributed without explicit written permission from the copyright owner.
