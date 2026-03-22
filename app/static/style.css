@@ -1,71 +1,170 @@
 /* ═══════════════════════════════════════════════════════════
-   VOICE AGENT — SOUL IMAGING CLINICAL STYLES
+   VOICE AGENT — GLASSED SPACECRAFT AESTHETICS OVERLOAD
    ═══════════════════════════════════════════════════════════ */
 
+:root {
+    --bg-dark: #05070C;
+    --neon-teal: #00FFDD;
+    --neon-blue: #0066FF;
+    --glass-opacity: rgba(255, 255, 255, 0.02);
+    --glass-border: rgba(255, 255, 255, 0.04);
+}
+
+/* ─── DYNAMIC BACKGROUND MESH ─── */
 body {
-    background-color: #F4F7F9;
-    color: #1A2A3A;
+    background-color: var(--bg-dark) !important;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 102, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(0, 255, 221, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(0, 102, 255, 0.03) 0%, transparent 50%) !important;
+    background-attachment: fixed !important;
+    color: #E2E8F0 !important;
+    overflow-x: hidden;
 }
 
 /* ─── SCROLLBAR ─── */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-    background: #E0E6ED;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--neon-teal); }
+
+/* ─── GLOBAL OVERRIDES (Tailwind fallback) ─── */
+.bg-soul-bg { background-color: var(--bg-dark) !important; }
+.text-text-primary { color: #E2E8F0 !important; }
+.text-text-muted { color: #8F9CAE !important; }
+
+/* ─── GLASS PANEL EFFECTS ─── */
+.bg-soul-panel {
+    background: rgba(10, 14, 23, 0.75) !important; /* Darker base to raise contrast against mesh */
+    backdrop-filter: blur(25px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #CBD5E1;
+.bg-soul-panel:hover {
+    background: rgba(15, 21, 35, 0.8) !important;
+    border-color: rgba(0, 255, 221, 0.15) !important;
+    box-shadow: 0 16px 50px -12px rgba(0, 255, 221, 0.12) !important;
+    transform: translateY(-2px);
 }
 
-/* ─── TICKET CARDS / INQUIRIES ─── */
+/* ─── ADDING COMPARTMENT DIVISIONS ─── */
+.bg-soul-panel h2 {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding-bottom: 12px;
+}
+
+/* ─── HEADER GLOW ─── */
+header.bg-soul-navy {
+    background: rgba(5, 7, 12, 0.7) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+}
+
+/* ─── DYNAMIC MIC VISUALIZER ─── */
+#mic-container {
+    background: radial-gradient(circle at center, rgba(0, 255, 221, 0.04) 0%, transparent 70%) !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
+    box-shadow: inset 0 0 40px rgba(0, 255, 221, 0.02) !important;
+    backdrop-filter: blur(10px);
+}
+
+@keyframes breath-glow {
+    0% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.15); opacity: 0.5; filter: blur(4px); }
+    100% { transform: scale(1); opacity: 0.3; }
+}
+
+#mic-ripple::before {
+    content: '';
+    position: absolute;
+    inset: -15px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 255, 221, 0.15) 0%, transparent 80%);
+    animation: breath-glow 3s infinite ease-in-out;
+    z-index: -1;
+}
+
+#call-button {
+    background-color: transparent !important;
+    background-image: linear-gradient(135deg, rgba(0, 255, 221, 0.3), rgba(0, 102, 255, 0.2)) !important;
+    border: 1px solid rgba(0, 255, 221, 0.3) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 221, 0.1) !important;
+}
+
+#call-button:hover {
+    box-shadow: 0 0 40px rgba(0, 255, 221, 0.3) !important;
+    transform: scale(1.05);
+}
+
+/* ─── INQUIRY CARDS ─── */
 .ticket-card {
-    background: #FFFFFF;
-    border-radius: 8px;
-    border: 1px solid #E5E9F0;
-    padding: 12px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    animation: opacity-in 0.3s ease-out;
+    background: rgba(255, 255, 255, 0.01) !important;
+    border: 1px solid rgba(255, 255, 255, 0.03) !important;
+    border-radius: 14px !important;
+    padding: 16px !important;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease-out !important;
 }
 
 .ticket-card:hover {
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    transform: translateX(6px) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(0, 255, 221, 0.2) !important;
+    box-shadow: -10px 0 30px rgba(0, 255, 221, 0.05) !important;
 }
 
-.urgency-low { border-left: 4px solid #00A8A8; }
-.urgency-medium { border-left: 4px solid #E2A100; }
-.urgency-high { border-left: 4px solid #EF4444; }
+.urgency-low { border-left: 3px solid var(--neon-teal) !important; }
+.urgency-medium { border-left: 3px solid #FFCD3A !important; }
+.urgency-high { border-left: 3px solid #FF3366 !important; }
+
+/* ─── METRIC BLOCKS ─── */
+.bg-soul-light-teal {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.03) !important;
+    border-radius: 12px !important;
+}
+
+/* ─── TRANSCRIPT STYLING ─── */
+.transcript-line {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02) !important;
+    padding: 12px 6px !important;
+    transition: background 0.2s;
+}
+
+.transcript-line:hover {
+    background: rgba(255, 255, 255, 0.015) !important;
+}
 
 /* ─── ANIMATIONS ─── */
 @keyframes opacity-in {
-    from { opacity: 0; transform: translateY(4px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse-light {
-    0% { box-shadow: 0 0 0 0 rgba(0, 168, 168, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(0, 168, 168, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 168, 168, 0); }
+/* ─── FORM & INPUT NORMALIZATION ─── */
+input[type="text"], input[type="email"], input[type="number"],
+select, textarea {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #E2E8F0 !important;
+    border-radius: 12px !important;
 }
 
-.mic-active {
-    animation: pulse-light 2s infinite;
+input:focus, select:focus, textarea:focus {
+    border-color: rgba(0, 255, 221, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(0, 255, 221, 0.08) !important;
+    outline: none !important;
 }
 
-/* canvas settings for wave rendering */
-#waveform-canvas {
-    background: transparent;
-}
-
-/* standard inputs for admin textareas */
-textarea#cfg-prompt {
-    font-family: inherit;
-    line-height: 1.6;
+option { 
+    background: #0C1220; 
+    color: #E2E8F0; 
 }
