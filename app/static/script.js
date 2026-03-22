@@ -23,10 +23,14 @@ let sessionTimer = null;
 let messageCount = 0;
 let ticketCount = 0;
 let waveformAnimationId = null;
+let isPaused = false;
 
 // ─── DOM REFS ───
 const callButton = document.getElementById('call-button');
 const callButtonText = document.getElementById('call-button-text');
+const pauseButton = document.getElementById('pause-button');
+const pauseButtonText = document.getElementById('pause-button-text');
+const stopButton = document.getElementById('stop-button');
 const connectionDot = document.getElementById('connection-dot');
 const connectionLabel = document.getElementById('connection-label');
 const latencyValue = document.getElementById('latency-value');
@@ -63,10 +67,10 @@ resizeCanvas();
 
 function getWaveformColor() {
     switch (currentState) {
-        case STATE.LISTENING: return '#00FFFF';
-        case STATE.SPEAKING: return '#00E676';
-        case STATE.PROCESSING: return '#FFB300';
-        default: return 'rgba(224, 224, 255, 0.15)';
+        case STATE.LISTENING: return '#00A8A8'; // Teal
+        case STATE.SPEAKING: return '#00A8A8'; // Teal
+        case STATE.PROCESSING: return '#E2A100'; // Amber
+        default: return 'rgba(0, 168, 168, 0.2)';
     }
 }
 
@@ -374,6 +378,8 @@ function stopSessionTimer() {
 // ─── AUDIO PLAYBACK (RAW PCM16 @ 24kHz) ───
 let playbackAudioContext = null;
 let nextStartTime = 0;
+let playingSources = [];
+let ttsGeneration = 0;
 
 function processPCMChunk(pcmData) {
     if (!playbackAudioContext) {
@@ -411,11 +417,28 @@ function processPCMChunk(pcmData) {
         nextStartTime = now;
     }
     source.start(nextStartTime);
+    playingSources.push(source);
+    source.onended = () => {
+        playingSources = playingSources.filter(s => s !== source);
+    };
     nextStartTime += audioBuffer.duration;
 }
 
-function clearAudioQueue() {
+function killAudio() {
+    playingSources.forEach(source => {
+        try { source.stop(); } catch (e) {}
+    });
+    playingSources = [];
     nextStartTime = 0;
+    if (playbackAudioContext && playbackAudioContext.state === 'running') {
+        playbackAudioContext.suspend();
+    }
+}
+
+function resumeAudio() {
+    if (playbackAudioContext && playbackAudioContext.state === 'suspended') {
+        playbackAudioContext.resume();
+    }
 }
 
 // ─── WEBSOCKET ───
@@ -466,6 +489,14 @@ async function startCall() {
             startSessionTimer();
             addTranscript('system', 'Connection established. Agent is listening...');
 
+            isPaused = false;
+            pauseButton.classList.remove('hidden');
+            pauseButton.classList.add('flex');
+            pauseButtonText.textContent = 'Pause Agent';
+
+            stopButton.classList.remove('hidden');
+            stopButton.classList.add('flex');
+
             // Send greeting to trigger initial agent response
             ws.send(JSON.stringify({ type: 'greeting' }));
             setState(STATE.PROCESSING);
@@ -473,22 +504,47 @@ async function startCall() {
 
             // Start sending audio data
             scriptProcessor.onaudioprocess = (e) => {
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    const inputData = e.inputBuffer.getChannelData(0);
-                    const pcm16 = new Int16Array(inputData.length);
-                    for (let i = 0; i < inputData.length; i++) {
-                        pcm16[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
-                    }
-                    ws.send(pcm16.buffer);
+                if (!ws || ws.readyState !== WebSocket.OPEN) return;
+                const inputData = e.inputBuffer.getChannelData(0);
+
+                // RMS energy for barge-in detection
+                let rms = 0;
+                for (let i = 0; i < inputData.length; i++) rms += inputData[i] ** 2;
+                rms = Math.sqrt(rms / inputData.length);
+
+                if (isPaused) {
+                    return; // drop all mic chunks
                 }
+
+                if (currentState === STATE.SPEAKING) {
+                    // Do NOT send audio bytes (prevents echo reaching server STT)
+                    // But if user is clearly speaking over agent (loud), signal barge-in
+                    if (rms > 0.025) {
+                        ws.send(JSON.stringify({ type: 'barge_in' }));
+                        ttsGeneration++;
+                        killAudio();
+                        setState(STATE.LISTENING);
+                    } else {
+                        return; // don't send bytes
+                    }
+                }
+
+                // Normal mode: send PCM bytes for STT
+                const pcm16 = new Int16Array(inputData.length);
+                for (let i = 0; i < inputData.length; i++) {
+                    pcm16[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+                }
+                ws.send(pcm16.buffer);
             };
         };
 
         ws.onmessage = async (event) => {
             if (event.data instanceof Blob) {
-                // Raw PCM16 audio data from TTS
-                setState(STATE.SPEAKING);
+                const myGen = ttsGeneration;
                 const arrayBuffer = await event.data.arrayBuffer();
+                if (myGen !== ttsGeneration) return; // stale - discard
+                resumeAudio();
+                setState(STATE.SPEAKING);
                 processPCMChunk(new Uint8Array(arrayBuffer));
             } else {
                 // JSON control messages
@@ -498,8 +554,7 @@ async function startCall() {
                     if (msg.type === 'tts_complete') {
                         setState(STATE.LISTENING);
                     } else if (msg.type === 'clear_audio') {
-                        clearAudioQueue();
-                        addTranscript('system', '⚡ Barge-in detected — audio cleared');
+                        killAudio();
                         setState(STATE.LISTENING);
                     } else if (msg.type === 'transcript') {
                         addTranscript('user', msg.text);
@@ -556,7 +611,7 @@ function endCall() {
     }
 
     analyser = null;
-    clearAudioQueue();
+    killAudio();
     stopSessionTimer();
 
     // Reset UI
@@ -564,6 +619,12 @@ function endCall() {
     callButton.classList.remove('active', 'connecting');
     callButtonText.textContent = 'Initialize Call';
     callButton.setAttribute('aria-label', 'Start voice call');
+
+    pauseButton.classList.remove('flex');
+    pauseButton.classList.add('hidden');
+    stopButton.classList.remove('flex');
+    stopButton.classList.add('hidden');
+    isPaused = false;
 
     connectionDot.classList.remove('connected');
     connectionLabel.textContent = 'Disconnected';
@@ -578,6 +639,50 @@ callButton.addEventListener('click', () => {
         addTranscript('system', 'Terminating session...');
         endCall();
     }
+});
+
+pauseButton.addEventListener('click', () => {
+    isPaused = !isPaused;
+    if (isPaused) {
+        pauseButtonText.textContent = 'Resume Agent';
+        pauseButton.classList.add('bg-soul-teal/30');
+        waveformState.textContent = 'AGENT PAUSED';
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'barge_in' }));
+        }
+        addTranscript('system', 'Agent paused.');
+    } else {
+        pauseButtonText.textContent = 'Pause Agent';
+        pauseButton.classList.remove('bg-soul-teal/30');
+        setState(currentState); // refresh status text
+        addTranscript('system', 'Microphone resumed.');
+    }
+});
+
+stopButton.addEventListener('click', () => {
+    addTranscript('system', 'Saving session and resetting workspace...');
+    endCall();
+    
+    // Clear live view elements
+    if (transcriptContainer) {
+        transcriptContainer.innerHTML = `
+            <div class="flex items-start gap-3 bg-soul-light-teal/50 p-3 rounded-lg">
+                <span class="font-code text-xs text-text-muted mt-0.5">--:--</span>
+                <div class="flex-1">
+                    <span class="block text-xs font-bold text-soul-teal uppercase">System</span>
+                    <p class="text-sm text-text-primary mt-0.5">Workspace Reset. Press start to speak with a fresh session.</p>
+                </div>
+            </div>
+        `;
+    }
+    if (ticketsContainer) {
+        ticketsContainer.innerHTML = `<div class="text-center py-10"><span class="text-xs text-text-muted">No inquiries logged yet</span></div>`;
+    }
+    
+    // Reset stats
+    messageCount = 0;
+    document.getElementById('metric-duration').textContent = "00:00";
+    document.getElementById('metric-messages').textContent = "0";
 });
 
 const micContainer = document.getElementById('mic-container');
@@ -685,6 +790,7 @@ async function uploadDocs(files) {
             const data = await resp.json();
             setKBStatus('READY', 'teal', 100);
             addTranscript('system', `Intelligence updated: ${data.message}`);
+            loadKnowledgeFiles(); // Refresh file list after upload
         } else {
             throw new Error('Upload failed');
         }
@@ -724,8 +830,10 @@ if (tabCall && tabAdmin && viewCall && viewAdmin) {
         tabAdmin.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 bg-white text-soul-navy shadow-sm';
         tabCall.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 text-white/80 hover:text-white';
         loadKnowledgeFiles();
+        loadCallHistory();
     });
 }
+
 
 async function loadSettings() {
     try {
@@ -775,12 +883,12 @@ async function loadKnowledgeFiles() {
         fileListContainer.innerHTML = files.map(filename => {
             const ext = filename.split('.').pop().toUpperCase();
             return `
-                <div class="flex items-center justify-between bg-soul-light-teal/50 p-3 rounded-lg hover:border-soul-teal/40 border border-transparent transition-all">
+                <div class="flex items-center justify-between bg-white/[0.03] border border-white/[0.05] p-2.5 rounded-xl hover:border-soul-teal/30 hover:bg-white/[0.05] transition-all group">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center font-bold text-xs">${ext}</div>
-                        <span class="text-xs font-semibold text-text-primary truncate max-w-[180px]">${filename}</span>
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-text-muted flex items-center justify-center font-bold text-xs group-hover:text-soul-teal group-hover:border-soul-teal/20 transition-all">${ext}</div>
+                        <span class="text-xs font-semibold text-white truncate max-w-[180px]">${filename}</span>
                     </div>
-                    <button class="text-red-500 hover:text-red-700 p-1 delete-file-btn" data-name="${filename}">
+                    <button class="text-white/40 hover:text-red-500 p-1 delete-file-btn transition-colors" data-name="${filename}">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -802,10 +910,36 @@ async function deleteFile(filename) {
     } catch (err) { }
 }
 
-// Override direct upload output to list
-const originalUploadDocs = uploadDocs;
-uploadDocs = async (files) => { await originalUploadDocs(files); loadKnowledgeFiles(); }
+async function loadCallHistory() {
+    const historyBody = document.getElementById('history-table-body');
+    if (!historyBody) return;
+    try {
+        const resp = await fetch('/api/history');
+        const result = await resp.json();
+        
+        if (result.status === 'success' && result.data.length > 0) {
+            historyBody.innerHTML = result.data.map(session => {
+                const dateObj = new Date(session.start_time);
+                const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const mins = String(Math.floor(session.duration_seconds / 60)).padStart(2, '0');
+                const secs = String(session.duration_seconds % 60).padStart(2, '0');
+                
+                return `
+                    <tr class="hover:bg-white/[0.03] border-b border-white/[0.02] transition-colors">
+                        <td class="px-3 py-3 text-xs text-white font-medium">${dateStr}</td>
+                        <td class="px-3 py-3 text-xs font-code tabular-nums text-text-muted">${mins}:${secs}</td>
+                        <td class="px-3 py-3 text-xs text-text-muted">${session.messages_count}</td>
+                        <td class="px-3 py-3"><span class="bg-soul-teal/10 text-soul-teal border border-soul-teal/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold">${session.tickets_created}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            historyBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-xs text-text-muted">No call history available yet.</td></tr>`;
+        }
+    } catch (err) {
+        historyBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-xs text-red-500">Failed to load history</td></tr>`;
+    }
+}
 
-document.addEventListener('DOMContentLoaded', () => { loadSettings(); loadKnowledgeFiles(); });
-loadSettings(); loadKnowledgeFiles();
+document.addEventListener('DOMContentLoaded', () => { loadSettings(); loadKnowledgeFiles(); loadCallHistory(); });
 
