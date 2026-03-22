@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soul Imaging — AI Receptionist</title>
+    <title>Soul Imaging — Aether HUD</title>
     <meta name="description" content="Empathetic AI-powered voice assistant for Soul Imaging Clinic.">
 
     <!-- Tailwind CDN -->
@@ -14,16 +14,18 @@
             theme: {
                 extend: {
                     colors: {
-                        'soul-navy': '#0A2540',
-                        'soul-teal': '#00A8A8',
-                        'soul-light-teal': '#E5F6F6',
-                        'soul-bg': '#F4F7F9',
-                        'soul-panel': '#FFFFFF',
-                        'text-primary': '#1A2A3A',
-                        'text-muted': '#6B7C93',
+                        'soul-navy': '#04060B',
+                        'soul-teal': '#00FFDD',
+                        'soul-blue': '#0066FF',
+                        'soul-light-teal': 'rgba(0, 255, 221, 0.05)',
+                        'soul-bg': '#020306',
+                        'soul-panel': 'rgba(255, 255, 255, 0.02)',
+                        'text-primary': '#E2E8F0',
+                        'text-muted': '#94A3B8',
                     },
                     fontFamily: {
-                        sans: ['"Outfit"', '"Inter"', 'sans-serif'],
+                        sans: ['"Sora"', '"Outfit"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
                         code: ['"Fira Code"', 'monospace'],
                     },
                 },
@@ -34,162 +36,180 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Sora:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="/static/style.css?v=fresh">
+    <link rel="stylesheet" href="/static/style.css?v=fresh3">
 </head>
 
 <body class="bg-soul-bg text-text-primary font-sans min-h-screen flex flex-col antialiased">
 
-    <!-- ═══════════ HEADER BAR ═══════════ -->
-    <header class="bg-soul-navy text-white px-6 py-4 flex items-center justify-between flex-shrink-0 shadow-md">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-soul-teal flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg tracking-wide leading-tight">Soul Imaging</h1>
-                <span id="agent-display-name" class="text-xs text-soul-teal tracking-wider uppercase font-medium">Loading config...</span>
-            </div>
-        </div>
+    <!-- ─── DYNAMIC BACKDROP ─── -->
+    <div class="fixed inset-0 -z-20 bg-soul-bg"></div>
+    <div class="fixed inset-0 -z-10 bg-mesh"></div>
+    <div class="fixed top-[-20%] left-[-10%] w-[60%] h-[60%] bg-soul-blue/10 rounded-full filter blur-[120px] -z-10 animate-pulse"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-soul-teal/8 rounded-full filter blur-[100px] -z-10"></div>
 
-        <div class="flex items-center gap-6">
-            <!-- Navigation Tabs -->
-            <nav class="flex gap-1 bg-white/10 p-1 rounded-lg mr-4">
-                <button id="tab-call" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 bg-white text-soul-navy shadow-sm">
-                    Voice Assistant
-                </button>
-                <button id="tab-admin" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 text-white/80 hover:text-white">
-                    Admin Dashboard
-                </button>
-            </nav>
-
-            <div class="hidden sm:flex items-center gap-2 text-white/60">
-                <span class="text-xs uppercase tracking-wider">Latency</span>
-                <span id="latency-value" class="font-code text-sm text-soul-teal tabular-nums">—ms</span>
+    <!-- ═══════════ FLOATING HEADER BAR ═══════════ -->
+    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
+        <header class="bg-soul-navy/60 backdrop-blur-xl border border-white/5 px-6 py-3 rounded-2xl flex items-center justify-between shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-soul-teal to-soul-blue flex items-center justify-center shadow-lg">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base tracking-wide leading-tight text-white">Soul Imaging</h1>
+                    <span id="agent-display-name" class="text-[10px] text-soul-teal tracking-widest uppercase font-semibold">AETHER CORE</span>
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <span id="connection-dot" class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
-                <span id="connection-label" class="text-xs uppercase tracking-wider text-white/80">Offline</span>
-            </div>
-        </div>
-    </header>
 
-    <!-- ═══════════ VIEW 1: VOICE CALL ═══════════ -->
-    <main id="view-call" class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
+            <div class="flex items-center gap-6">
+                <!-- Navigation Tabs -->
+                <nav class="flex gap-1 bg-white/5 p-1 rounded-xl">
+                    <button id="tab-call" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 bg-white/10 text-white shadow-sm">
+                        Voice Assistant
+                    </button>
+                    <button id="tab-admin" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 text-white/50 hover:text-white hover:bg-white/5">
+                        Admin
+                    </button>
+                </nav>
+
+                <div class="hidden sm:flex items-center gap-2 text-white/40 border-l border-white/10 pl-4">
+                    <span class="text-[10px] uppercase tracking-wider">LAT</span>
+                    <span id="latency-value" class="font-code text-xs text-soul-teal tabular-nums">—ms</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="connection-dot" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
+                    <span id="connection-label" class="text-[10px] items-center uppercase tracking-widest text-white/60">Offline</span>
+                </div>
+            </div>
+        </header>
+    </div>
+
+    <!-- ═══════════ VIEW 1: VOICE CALL (IMMERSIVE HUD) ═══════════ -->
+    <main id="view-call" class="flex-1 mt-20 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
         
-        <!-- Left Column: Metrics & Visualizer -->
-        <section class="lg:col-span-8 flex flex-col gap-6">
-            
-            <!-- Audio Visualizer Panel -->
-            <div class="bg-soul-panel rounded-xl shadow-sm p-8 flex flex-col items-center justify-center relative flex-1 min-h-[300px]">
-                <h2 class="absolute top-6 left-6 text-sm font-bold text-soul-navy uppercase tracking-wider">Live Audio I/O</h2>
-
-                <!-- Centered Call Button & Waveform -->
-                <div class="flex flex-col items-center justify-center gap-6 w-full max-w-lg">
-                    <div id="mic-container" class="w-28 h-28 rounded-full bg-soul-light-teal flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 relative">
-                        <!-- Ripple Effect -->
-                        <div id="mic-ripple" class="absolute inset-0 rounded-full bg-soul-teal/20 animate-ping opacity-0"></div>
-                        
-                        <button id="call-button" class="w-20 h-20 rounded-full bg-soul-teal text-white flex items-center justify-center shadow-lg transition-all duration-300 focus:outline-none">
-                            <svg id="mic-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                <line x1="12" y1="19" x2="12" y2="22"/>
-                            </svg>
-                        </button>
+        <!-- Left Wing: Stats & Inquiries -->
+        <section class="lg:col-span-3 flex flex-col gap-5 order-2 lg:order-1 overflow-y-auto">
+            <!-- stats -->
+            <div class="bg-soul-panel border border-white/3 rounded-2xl p-5 backdrop-blur-xl">
+                <h2 class="text-xs font-bold text-soul-teal uppercase tracking-widest mb-3">Telemetry</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white/[0.01] border border-white/[0.02] p-3 rounded-xl text-center">
+                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Duration</span>
+                        <div id="metric-duration" class="font-bold text-lg text-white mt-1">00:00</div>
                     </div>
-
-                    <div id="waveform-state" class="text-sm font-medium text-text-muted mt-2">
-                        Click microphone to introduce yourself
-                    </div>
-
-                    <!-- Waveform Canvas -->
-                    <div class="w-full h-20 relative">
-                        <canvas id="waveform-canvas" class="w-full h-full"></canvas>
-                        <div class="absolute inset-y-0 left-0 right-0 flex items-center pointer-events-none">
-                            <div class="w-full h-px bg-soul-teal/10"></div>
-                        </div>
+                    <div class="bg-white/[0.01] border border-white/[0.02] p-3 rounded-xl text-center">
+                        <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Messages</span>
+                        <div id="metric-messages" class="font-bold text-lg text-white mt-1">0</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Live Transcript -->
-            <div class="bg-soul-panel rounded-xl shadow-sm p-6 flex-1 flex flex-col min-h-0">
-                <h2 class="text-sm font-bold text-soul-navy uppercase tracking-wider mb-4">Live Transcript</h2>
-                <div id="transcript-container" class="flex-1 overflow-y-auto space-y-3 min-h-0 scroll-smooth pr-2">
-                    <!-- Welcome Line -->
-                    <div class="flex items-start gap-3 bg-soul-light-teal/50 p-3 rounded-lg">
-                        <span class="font-code text-xs text-text-muted mt-0.5">--:--</span>
-                        <div class="flex-1">
-                            <span class="block text-xs font-bold text-soul-teal uppercase">System</span>
-                            <p class="text-sm text-text-primary mt-0.5">Welcome to the Soul Imaging AI Voice Assistant. Press start to speak.</p>
+            <!-- inquiries -->
+            <div class="bg-soul-panel border border-white/3 rounded-2xl p-5 flex-1 flex flex-col min-h-0 backdrop-blur-xl">
+                <h2 class="text-xs font-bold text-soul-teal uppercase tracking-widest mb-3">Inquiries</h2>
+                <div id="tickets-container" class="flex-1 overflow-y-auto space-y-2.5 min-h-0 pr-1">
+                    <div class="text-center py-8">
+                        <div class="text-soul-teal/10 mx-auto mb-2">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
                         </div>
+                        <span class="text-[10px] text-text-muted">Empty Manifest</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Right Column: Context/Logged Inquiries -->
-        <section class="lg:col-span-4 flex flex-col gap-6">
-            <!-- System Status Cards -->
-            <div class="bg-soul-panel rounded-xl shadow-sm p-6">
-                <h2 class="text-sm font-bold text-soul-navy uppercase tracking-wider mb-4">Session Statistics</h2>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-soul-light-teal p-3 rounded-lg text-center">
-                        <span class="text-[11px] font-bold text-soul-teal uppercase tracking-wider">Duration</span>
-                        <div id="metric-duration" class="font-bold text-xl text-soul-navy mt-1">00:00</div>
-                    </div>
-                    <div class="bg-soul-light-teal p-3 rounded-lg text-center">
-                        <span class="text-[11px] font-bold text-soul-teal uppercase tracking-wider">Messages</span>
-                        <div id="metric-messages" class="font-bold text-xl text-soul-navy mt-1">0</div>
-                    </div>
+        <!-- Center Stage: The AI Core Orb -->
+        <section class="lg:col-span-6 flex flex-col justify-center items-center relative order-1 lg:order-2 py-8">
+            
+            <div class="relative flex flex-col items-center">
+                <!-- Outer orbiting ring -->
+                <div class="absolute inset-[-40px] border border-dashed border-soul-teal/10 rounded-full animate-[spin_60s_linear_infinite]"></div>
+                <div class="absolute inset-[-60px] border border-dotted border-soul-blue/10 rounded-full animate-[spin_90s_linear_infinite_reverse]"></div>
+
+                <!-- Core Ambient Glow -->
+                <div id="mic-container" class="w-44 h-44 rounded-full flex items-center justify-center cursor-pointer transition-all duration-500 relative">
+                    <!-- Ripple Animation -->
+                    <div id="mic-ripple" class="absolute inset-0 rounded-full bg-soul-teal/20 opacity-0"></div>
+                    
+                    <button id="call-button" class="w-32 h-32 rounded-full text-white flex items-center justify-center focus:outline-none z-10 transition-transform duration-300">
+                        <div id="mic-icon" class="relative">
+                            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-soul-teal drop-shadow-[0_0_15px_rgba(0,255,221,0.4)]">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                <line x1="12" y1="19" x2="12" y2="22"/>
+                            </svg>
+                        </div>
+                    </button>
+                    
+                    <!-- Ambient status around core -->
+                    <svg class="absolute inset-0 w-full h-full -rotate-90 opacity-20" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="48" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="300" stroke-dashoffset="150" />
+                    </svg>
+                </div>
+
+                <div id="waveform-state" class="font-display font-bold text-[11px] tracking-[0.2em] uppercase mt-6 text-center text-soul-teal drop-shadow-[0_0_10px_rgba(0,255,221,0.3)]">
+                    AWAITING CONTEXT
+                </div>
+                
+                <div class="flex items-center gap-3 mt-4">
+                    <button id="pause-button" class="hidden px-4 py-1.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wider transition-all flex items-center gap-2">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        <span id="pause-button-text">Pause</span>
+                    </button>
+
+                    <button id="stop-button" class="hidden px-4 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-500 text-[10px] font-semibold uppercase tracking-wider transition-all flex items-center gap-2">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"></rect></svg>
+                        <span>Reset</span>
+                    </button>
+                </div>
+
+                <!-- Wrapped Waveform Canvas -->
+                <div class="w-64 h-16 relative mt-4">
+                    <canvas id="waveform-canvas" class="w-full h-full"></canvas>
                 </div>
             </div>
 
-            <!-- Logged Patient Inquiries (Replaces Tickets) -->
-            <div class="bg-soul-panel rounded-xl shadow-sm p-6 flex-1 flex flex-col min-h-0">
-                <h2 class="text-sm font-bold text-soul-navy uppercase tracking-wider mb-4">Logged Inquiries</h2>
-                <div id="tickets-container" class="flex-1 overflow-y-auto space-y-3 min-h-0 pr-1">
-                    <div class="text-center py-10">
-                        <div class="text-soul-teal/20 mx-auto mb-2">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                                <polyline points="10 9 9 9 8 9"/>
-                            </svg>
+        </section>
+
+        <!-- Right Wing: Live Logs / Transcript -->
+        <section class="lg:col-span-3 flex flex-col min-h-0 order-3 backdrop-blur-xl">
+            <div class="bg-soul-panel border border-white/3 rounded-2xl p-5 flex flex-col h-full overflow-hidden">
+                <h2 class="text-xs font-bold text-soul-teal uppercase tracking-widest mb-3">Live Feed</h2>
+                <div id="transcript-container" class="flex-1 overflow-y-auto space-y-3 min-h-0 scroll-smooth pr-1 text-xs">
+                    <div class="flex items-start gap-3 bg-white/[0.02] border border-white/[0.02] p-2.5 rounded-xl">
+                        <div class="flex-1">
+                            <span class="block text-[10px] font-bold text-soul-teal uppercase">Sys</span>
+                            <p class="text-text-primary mt-1">Awaiting link initialization. Tap matrix to speak.</p>
                         </div>
-                        <span class="text-xs text-text-muted">No inquiries logged yet</span>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- ═══════════ VIEW 2: ADMIN DASHBOARD ═══════════ -->
-    <main id="view-admin" class="hidden flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
-        <!-- Left Panel: Configurations -->
+    <!-- ═══════════ VIEW 2: ADMIN DASHBOARD (GLASS OVERLAY) ═══════════ -->
+    <main id="view-admin" class="hidden flex-1 mt-20 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
         <section class="lg:col-span-7 flex flex-col gap-6 overflow-y-auto pr-2">
             
-            <!-- Agent Identity Form -->
-            <div class="bg-soul-panel rounded-xl shadow-sm p-6">
-                <h2 class="text-lg font-bold text-soul-navy mb-4">Agent Configuration</h2>
-                
+            <div class="bg-soul-panel border border-white/3 rounded-2xl p-6 backdrop-blur-xl">
+                <h2 class="text-sm font-bold text-white mb-4 uppercase tracking-wider">Identity config</h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-text-primary mb-1">Agent Name</label>
-                        <input type="text" id="cfg-name" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-soul-teal outline-none" value="Aria">
+                        <label class="block text-[10px] font-bold text-text-muted mb-1 uppercase tracking-wider">Agent Node</label>
+                        <input type="text" id="cfg-name" class="w-full bg-soul-panel border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:border-soul-teal outline-none transition-colors" value="Aria">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-text-primary mb-1">Voice Profile</label>
-                            <select id="cfg-voice" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-soul-teal outline-none bg-white">
+                            <label class="block text-[10px] font-bold text-text-muted mb-1 uppercase tracking-wider">Acoustics</label>
+                            <select id="cfg-voice" class="w-full bg-soul-panel border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:border-soul-teal outline-none transition-colors">
                                 <option value="en-AU-NatashaNeural">Female (Aussie - Natasha)</option>
                                 <option value="en-AU-AnnetteNeural">Female (Aussie - Annette)</option>
                                 <option value="en-AU-WilliamNeural">Male (Aussie - William)</option>
@@ -197,61 +217,64 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-text-primary mb-1">Creativity (Temp)</label>
+                            <label class="block text-[10px] font-bold text-text-muted mb-1 uppercase tracking-wider">Creativity</label>
                             <input type="range" id="cfg-temp" min="0" max="1" step="0.1" value="0.7" class="w-full mt-2 accent-soul-teal">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- System Prompt Settings -->
-            <div class="bg-soul-panel rounded-xl shadow-sm p-6 flex-1 flex flex-col">
-                <label class="block text-lg font-bold text-soul-navy mb-2">System Instructions</label>
-                <span class="text-xs text-text-muted mb-4 block">Tailor how the agent behaves, answers, and speaks to patients.</span>
-                
-                <textarea id="cfg-prompt" class="w-full flex-1 border border-gray-200 rounded-lg p-4 text-sm font-sans focus:border-soul-teal outline-none resize-none mb-4" placeholder="Type instructions here..."></textarea>
-                
-                <button id="save-settings-btn" class="self-end bg-soul-teal text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-soul-teal/90 transition-colors">
-                    Save Configuration
+            <div class="bg-soul-panel border border-white/3 rounded-2xl p-6 flex-1 flex flex-col backdrop-blur-xl">
+                <label class="block text-sm font-bold text-white mb-2 uppercase tracking-wider">Directives Matrix</label>
+                <textarea id="cfg-prompt" class="w-full flex-1 bg-soul-panel border border-white/5 rounded-xl p-4 text-xs font-sans text-white focus:border-soul-teal outline-none resize-none mb-4 transition-colors" placeholder="Update vector nodes..."></textarea>
+                <button id="save-settings-btn" class="self-end bg-gradient-to-r from-soul-teal to-soul-blue text-black px-6 py-2 rounded-xl text-xs font-bold shadow-md hover:brightness-110 transition-all">
+                    COMMIT CHANGES
                 </button>
+            </div>
+
+            <div class="bg-soul-panel border border-white/3 rounded-2xl p-6 flex flex-col backdrop-blur-xl">
+                <h2 class="text-sm font-bold text-white mb-4 uppercase tracking-wider">System Logs</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-text-primary">
+                        <thead class="bg-white/2 text-text-muted text-[10px] uppercase tracking-wider">
+                            <tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Duration</th><th class="px-3 py-2">Msg</th><th class="px-3 py-2">Tickets</th></tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-white/[0.02]">
+                            <tr><td colspan="4" class="text-center py-4 text-text-muted">Populating link logs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
         <!-- Right Panel: Knowledge Base Files -->
         <section class="lg:col-span-5 flex flex-col gap-6 overflow-hidden">
-            <div class="bg-soul-panel rounded-xl shadow-sm p-6 flex flex-col h-full overflow-hidden">
-                <h2 class="text-lg font-bold text-soul-navy mb-2">Knowledge Base</h2>
-                <span class="text-xs text-text-muted mb-4 block">Upload `.txt`, `.md`, `.pdf`, or `.json` groundings for the AI.</span>
+            <div class="bg-soul-panel border border-white/3 rounded-2xl p-6 flex flex-col h-full overflow-hidden backdrop-blur-xl">
+                <h2 class="text-sm font-bold text-white mb-1 uppercase tracking-wider">Vector Assets</h2>
+                <span class="text-[10px] text-text-muted mb-4 block">Ferry datasets into grounding indices.</span>
 
                 <!-- Drag & Drop Zone -->
-                <div id="upload-zone" class="border border-dashed border-gray-200 rounded-xl p-6 text-center transition-all duration-200 hover:border-soul-teal hover:bg-soul-light-teal/40 cursor-pointer relative group">
+                <div id="upload-zone" class="border-2 border-dashed border-white/5 rounded-xl p-6 text-center hover:border-soul-teal/30 hover:bg-white/[0.01] cursor-pointer transition-all duration-300 relative group">
                     <input type="file" id="kb-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept=".txt,.md,.pdf,.json" multiple>
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-2 text-text-muted group-hover:text-soul-teal">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-2 text-text-muted group-hover:text-soul-teal">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
-                    <span class="font-medium text-sm text-text-primary block">Drop files or click to upload</span>
-                    <span class="text-[10px] text-text-muted">Maximum 10MB per file</span>
+                    <span class="font-semibold text-xs text-white block">Inject Files</span>
                 </div>
 
                 <!-- Sync Control -->
-                <div class="flex items-center justify-between gap-4 mt-4 border-b border-gray-100 pb-4">
+                <div class="flex items-center justify-between gap-4 mt-4 border-b border-white/[0.03] pb-4">
                     <div>
-                        <span class="text-xs font-bold text-text-primary">Status: <span id="kb-status" class="text-soul-teal">READY</span></span>
-                        <div class="h-1 bg-gray-100 w-32 rounded-full overflow-hidden mt-1">
-                            <div id="kb-progress" class="w-0 h-full bg-soul-teal transition-all duration-300"></div>
-                        </div>
+                        <span class="text-[10px] font-bold text-text-primary uppercase tracking-widest">Index: <span id="kb-status" class="text-soul-teal">READY</span></span>
+                        <div class="h-1 bg-white/5 w-24 rounded-full overflow-hidden mt-1"><div id="kb-progress" class="w-0 h-full bg-soul-teal transition-all"></div></div>
                     </div>
-                    <button id="reindex-button" class="border border-soul-teal/30 hover:border-soul-teal px-4 py-1.5 rounded-lg text-xs font-medium text-soul-teal bg-white transition-colors">
-                        Re-Index Engine
+                    <button id="reindex-button" class="border border-soul-teal/20 hover:border-soul-teal px-3 py-1.5 rounded-xl text-[10px] font-bold text-soul-teal bg-transparent transition-all">
+                        RE-INDEX
                     </button>
                 </div>
 
-                <!-- Active Document List -->
-                <div class="flex-1 overflow-y-auto mt-4 space-y-2" id="file-list-container">
-                    <!-- Loaded dynamically from /api/knowledge-files -->
-                    <div class="text-center py-10 text-text-muted text-xs">Loading loaded documents...</div>
+                <div class="flex-1 overflow-y-auto mt-4 space-y-2 text-[10px]" id="file-list-container">
+                    <div class="text-center py-6 text-text-muted">Loading indices...</div>
                 </div>
             </div>
         </section>
