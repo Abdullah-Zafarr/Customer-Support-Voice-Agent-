@@ -135,6 +135,8 @@ async def websocket_endpoint(websocket: WebSocket):
     session_start = datetime.now()
     tickets_created = 0
     
+    stt_buffer = None
+
     async def on_transcript(transcript: str, is_final: bool):
         nonlocal tts_task
         if not transcript.strip() or not is_final:
@@ -152,7 +154,7 @@ async def websocket_endpoint(websocket: WebSocket):
         tts_task = asyncio.create_task(process_and_speak())
 
     async def process_and_speak():
-        nonlocal agent_speaking
+        nonlocal agent_speaking, stt_buffer
         checkpoint = [m.copy() for m in messages]
         try:
             current_settings = load_settings()
@@ -178,6 +180,9 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.send_json({"type": "response", "text": llm_response})
             
             agent_speaking = True
+            # Re-initialize STT buffer for the next turn BEFORE speaking starts
+            stt_buffer = await setup_stt(on_transcript)
+            
             try:
                 async for audio_chunk in get_tts_stream(llm_response, voice=current_voice):
                     if asyncio.current_task().cancelled():
@@ -193,14 +198,17 @@ async def websocket_endpoint(websocket: WebSocket):
             messages.clear()
             messages.extend(checkpoint)
             agent_speaking = False
+            # Ensure STT is ready even after cancellation
+            stt_buffer = await setup_stt(on_transcript)
             logger.info("Barge-in: message history restored.")
         except Exception as e:
             logger.error(f"Error in LLM/TTS logic: {e}")
             try:
                 await websocket.send_json({"type": "error", "text": str(e)})
             except Exception:
-                pass  
+                pass
 
+    # Initial STT setup
     stt_buffer = await setup_stt(on_transcript)
     if not stt_buffer:
         await websocket.close(code=1011, reason="Failed to initialize Whisper STT")
@@ -213,9 +221,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 break
                 
             if "bytes" in data:
-                if not agent_speaking:
-                    audio_data = data["bytes"]
-                    await stt_buffer.add_chunk(audio_data)
+                audio_data = data["bytes"]
+                await stt_buffer.add_chunk(audio_data)
             elif "text" in data:
                 try:
                     text_msg = json.loads(data["text"])
@@ -245,6 +252,10 @@ async def websocket_endpoint(websocket: WebSocket):
                             tts_task.cancel()
                             await websocket.send_json({"type": "clear_audio"})
                         tts_task = asyncio.create_task(process_and_speak())
+                elif text_msg.get("type") == "end_of_speech":
+                    if stt_buffer:
+                        # Ensure we handle the potentially async call
+                        asyncio.create_task(stt_buffer.force_complete())
                     
     except WebSocketDisconnect:
         logger.info("Client disconnected gracefully.")

@@ -41,6 +41,10 @@
 
     <!-- Custom Styles -->
     <link rel="stylesheet" href="/static/style.css?v=fresh3">
+    
+    <!-- Neural VAD Library -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@rikishi/vad-web@0.0.7/dist/bundle.min.js"></script>
 </head>
 
 <body class="bg-soul-bg text-text-primary font-sans min-h-screen flex flex-col antialiased">
@@ -209,10 +213,12 @@
                         <div>
                             <label class="block text-[10px] font-bold text-text-muted mb-1 uppercase tracking-wider">Acoustics</label>
                             <select id="cfg-voice" class="w-full bg-soul-panel border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:border-soul-teal outline-none transition-colors">
+                                <option value="en-GB-SoniaNeural">Female (British - Sonia - Very Expressive)</option>
+                                <option value="en-US-JennyNeural">Female (American - Jenny - Warm & Natural)</option>
+                                <option value="en-US-AriaNeural">Female (American - Aria - Upbeat)</option>
                                 <option value="en-AU-NatashaNeural">Female (Aussie - Natasha)</option>
                                 <option value="en-AU-AnnetteNeural">Female (Aussie - Annette)</option>
                                 <option value="en-AU-WilliamNeural">Male (Aussie - William)</option>
-                                <option value="en-UK-SoniaNeural">Female (British - Sonia)</option>
                             </select>
                         </div>
                         <div>

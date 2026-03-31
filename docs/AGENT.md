@@ -4,7 +4,7 @@ Hello AI! If you are reading this, you are navigating the "Voice Agent — Missi
 This document provides a high-level map of the codebase to help you understand the architecture, design choices, and conventions used in this project so you can assist the human user more effectively.
 
 ## Project Overview
-This is a real-time conversational AI customer support agent. It streams audio via WebSockets, processes it with local STT (Faster-Whisper), generates responses using an LLM (Llama 3.3 via Groq), and streams TTS audio back to the client using Microsoft Edge TTS.
+This is a real-time conversational AI customer support agent. It streams audio via WebSockets, processes it with local STT (Faster-Whisper), generates responses using an LLM (Llama 3.1 8B Instant via Groq), and streams TTS audio back to the client using Microsoft Edge TTS.
 
 ## Key Directories & Files
 - `/app/main.py`: The FastAPI server entry point. Serves static files and WebSocket endpoints.

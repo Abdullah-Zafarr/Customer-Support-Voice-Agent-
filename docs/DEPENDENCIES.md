@@ -9,7 +9,7 @@ The following open-source frameworks and libraries power the AI Voice Agent.
 - **Httpx** (`httpx`): Async HTTP client used for efficient REST API calls (like to HuggingFace or Groq).
 
 ## AI Models & Inference
-- **Groq** (`groq`): Official Python SDK for Groq Cloud. Used to run the Llama 3.3 70B Language Model at ultra-low latencies.
+- **Groq** (`groq`): Official Python SDK for Groq Cloud. Used to run the Llama 3.1 8B Instant Language Model at ultra-low latencies.
 - **Faster-Whisper** (`faster-whisper`): A highly optimized, local Speech-to-Text inference engine. Powers the `small.en` model for precise voice transcription on the CPU.
 - **Microosft Edge TTS** (`edge-tts`): A lightweight wrapper allowing access to highly expressive, zero-cost neural text-to-speech voices.
 

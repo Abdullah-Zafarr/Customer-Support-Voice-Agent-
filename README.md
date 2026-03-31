@@ -19,7 +19,7 @@ A production-ready, conversational AI Customer Support Voice Agent. Built to dem
 - **Autonomous RAG Engine:** Built-in **Retrieval-Augmented Generation** — drop your manuals (`.txt`, `.md`, `.pdf`) into the `knowledge/` folder, and the AI will answer questions based on them.
 - **Ultra-Accurate STT:** Powered by **Faster-Whisper** (`small.en`, 244M params) for superior recognition of names and accents.
 - **Low-Latency Streaming:** Sentence-level **Text-to-Speech streaming** — hear the response instantly as it generates.
-- **Fast LLM Inference:** **Groq (Llama 3.3 70B)** for millisecond reasoning and professional support persona.
+- **Fast LLM Inference:** **Groq (Llama 3.1 8B Instant)** for millisecond reasoning and professional support persona.
 - **Smart Ticket Tracking:** Autonomous **Support Ticket Management** — the AI updates existing tickets rather than cluttering with duplicates.
 - **Barge-in Logic:** Full duplex support — interrupts cancel ongoing TTS and process new speech immediately.
 - **Mission Control UI:** Cyberpunk dark-mode HUD with live waveforms, real-time ticket tracking, and system health status.
@@ -30,7 +30,7 @@ A production-ready, conversational AI Customer Support Voice Agent. Built to dem
 - **Backend:** Python + FastAPI (WebSocket streaming)
 - **Frontend:** Vanilla HTML/CSS/JS (**Share Tech Mono + Fira Code + IBM Plex Sans** fonts)
 - **Database:** SQLite via SQLAlchemy
-- **AI:** `faster-whisper` (local STT), `edge-tts` (neural TTS), `groq` (Llama 3.3 LLM)
+- **AI:** `faster-whisper` (local STT), `edge-tts` (neural TTS), `groq` (Llama 3.1 LLM)
 
 ## 📂 Project Structure
 
@@ -110,7 +110,7 @@ The agent is equipped with a custom-built RAG engine that allows it to act as a 
 1. Browser captures audio → 16kHz PCM16 via WebSocket.
 2. Server-side **Energy-Based VAD** triggers transcription.
 3. **Faster-Whisper (small.en)** transcribes locally.
-4. **Groq (Llama 3.3)** generates response + tool arguments.
+4. **Groq (Llama 3.1)** generates response + tool arguments.
 5. **Edge TTS** generates audio **sentence-by-sentence** for lowest possible latency.
 6. **PyAV** decodes → PCM16 chunks streamed instantly to browser.
 

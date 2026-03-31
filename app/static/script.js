@@ -24,6 +24,8 @@ let messageCount = 0;
 let ticketCount = 0;
 let waveformAnimationId = null;
 let isPaused = false;
+let myVAD = null;
+let userIsSpeaking = false;
 
 // ─── DOM REFS ───
 const callButton = document.getElementById('call-button');
@@ -458,6 +460,32 @@ async function startCall() {
                 noiseSuppression: true,
             },
         });
+        
+        // --- NEW: NEURAL VAD INTEGRATION ---
+        myVAD = await vad.MicVAD.new({
+            onSpeechStart: () => {
+                userIsSpeaking = true;
+                if (currentState === STATE.SPEAKING && !isPaused) {
+                    console.log("[VAD] Neural Speech Detected - Signaling Barge-in");
+                    ws.send(JSON.stringify({ type: 'barge_in' }));
+                    ttsGeneration++;
+                    killAudio();
+                    setState(STATE.LISTENING);
+                }
+                updateSystemStatus(STATE.LISTENING);
+            },
+            onSpeechEnd: () => {
+                userIsSpeaking = false;
+                console.log("[VAD] Speech Stopped");
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'end_of_speech' }));
+                }
+            },
+            positiveSpeechThreshold: 0.8,
+            negativeSpeechThreshold: 0.4,
+            minSpeechFrames: 3,
+        });
+        myVAD.start();
 
         // Setup audio context for microphone visualization
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
@@ -516,17 +544,14 @@ async function startCall() {
                     return; // drop all mic chunks
                 }
 
+                // --- GATED AUDIO STREAMING ---
+                // Only send audio data to the server if the neural model confirms speech
+                if (!userIsSpeaking) {
+                    return;
+                }
+
                 if (currentState === STATE.SPEAKING) {
-                    // Do NOT send audio bytes (prevents echo reaching server STT)
-                    // But if user is clearly speaking over agent (loud), signal barge-in
-                    if (rms > 0.25) { // Raised from 0.05 to 0.25 to prevent acoustic echo cancellation loops!
-                        ws.send(JSON.stringify({ type: 'barge_in' }));
-                        ttsGeneration++;
-                        killAudio();
-                        setState(STATE.LISTENING);
-                    } else {
-                        return; // don't send bytes
-                    }
+                    return; // Echo suppression: don't loop back agent's own output
                 }
 
                 // Normal mode: send PCM bytes for STT
@@ -608,6 +633,11 @@ function endCall() {
     if (mediaStream) {
         mediaStream.getTracks().forEach(track => track.stop());
         mediaStream = null;
+    }
+    
+    if (myVAD) {
+        myVAD.pause();
+        myVAD = null;
     }
 
     analyser = null;
@@ -883,12 +913,12 @@ async function loadKnowledgeFiles() {
         fileListContainer.innerHTML = files.map(filename => {
             const ext = filename.split('.').pop().toUpperCase();
             return `
-                <div class="flex items-center justify-between bg-white/[0.03] border border-white/[0.05] p-2.5 rounded-xl hover:border-soul-teal/30 hover:bg-white/[0.05] transition-all group">
+                <div class="flex items-center justify-between bg-soul-light-teal/50 p-3 rounded-lg hover:border-soul-teal/40 border border-transparent transition-all">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-text-muted flex items-center justify-center font-bold text-xs group-hover:text-soul-teal group-hover:border-soul-teal/20 transition-all">${ext}</div>
-                        <span class="text-xs font-semibold text-white truncate max-w-[180px]">${filename}</span>
+                        <div class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center font-bold text-xs">${ext}</div>
+                        <span class="text-xs font-semibold text-text-primary truncate max-w-[180px]">${filename}</span>
                     </div>
-                    <button class="text-white/40 hover:text-red-500 p-1 delete-file-btn transition-colors" data-name="${filename}">
+                    <button class="text-red-500 hover:text-red-700 p-1 delete-file-btn" data-name="${filename}">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -925,11 +955,11 @@ async function loadCallHistory() {
                 const secs = String(session.duration_seconds % 60).padStart(2, '0');
                 
                 return `
-                    <tr class="hover:bg-white/[0.03] border-b border-white/[0.02] transition-colors">
-                        <td class="px-3 py-3 text-xs text-white font-medium">${dateStr}</td>
-                        <td class="px-3 py-3 text-xs font-code tabular-nums text-text-muted">${mins}:${secs}</td>
-                        <td class="px-3 py-3 text-xs text-text-muted">${session.messages_count}</td>
-                        <td class="px-3 py-3"><span class="bg-soul-teal/10 text-soul-teal border border-soul-teal/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold">${session.tickets_created}</span></td>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 text-xs text-text-primary font-medium">${dateStr}</td>
+                        <td class="px-4 py-3 text-xs font-code tabular-nums">${mins}:${secs}</td>
+                        <td class="px-4 py-3 text-xs text-text-muted">${session.messages_count}</td>
+                        <td class="px-4 py-3"><span class="bg-soul-teal/10 text-soul-teal border border-soul-teal/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold">${session.tickets_created}</span></td>
                     </tr>
                 `;
             }).join('');
@@ -942,4 +972,3 @@ async function loadCallHistory() {
 }
 
 document.addEventListener('DOMContentLoaded', () => { loadSettings(); loadKnowledgeFiles(); loadCallHistory(); });
-

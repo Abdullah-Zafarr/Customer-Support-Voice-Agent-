@@ -18,8 +18,8 @@ STRICT BEHAVIORAL RULES:
 """
 
 DEFAULT_SETTINGS = {
-    "agent_name": "Aria",
-    "voice": "en-AU-NatashaNeural",
+    "agent_name": "Sonia",
+    "voice": "en-GB-SoniaNeural",
     "temperature": 0.7,
     "system_prompt": DEFAULT_SYSTEM_PROMPT
 }

@@ -17,8 +17,8 @@ from groq import AsyncGroq
 from .config import logger, settings
 
 # ─── VOICE ACTIVITY DETECTION (energy-based) ───
-SILENCE_THRESHOLD = 800  # Bumped slightly to ignore background noise/fan noise better
-SILENCE_DURATION_MS = 500
+SILENCE_THRESHOLD = 1800  # Further increased to ignore background noise/fan noise better
+SILENCE_DURATION_MS = 1500
 SAMPLE_RATE = 16000
 BYTES_PER_SAMPLE = 2
 
@@ -38,11 +38,7 @@ class AudioBuffer:
     def _compute_rms(self, pcm_bytes: bytes) -> float:
         if len(pcm_bytes) < 2:
             return 0.0
-        
-        # Prevent odd-length buffer crashes
-        safe_bytes = pcm_bytes[:len(pcm_bytes) - (len(pcm_bytes) % 2)]
-        samples = np.frombuffer(safe_bytes, dtype=np.int16)
-        
+        samples = np.frombuffer(pcm_bytes, dtype=np.int16)
         if len(samples) == 0:
             return 0.0
         return float(np.sqrt(np.mean(samples.astype(np.float32) ** 2)))
@@ -83,6 +79,21 @@ class AudioBuffer:
                     
                 asyncio.create_task(self._transcribe(audio_data))
 
+    async def force_complete(self):
+        """Force the buffer to finish and transcribe current contents."""
+        async with self._lock:
+            if not self.buffer or not self.has_speech:
+                return
+            audio_data = bytes(self.buffer)
+            self.buffer = bytearray()
+            self.has_speech = False
+            self._silence_accumulated = 0
+            
+            if len(audio_data) < 4000: # Final safety against tiny noise
+                return
+            
+            asyncio.create_task(self._transcribe(audio_data))
+
     async def _transcribe(self, pcm_bytes: bytes):
         try:
             # Wrap as WAV in-memory
@@ -106,11 +117,8 @@ class AudioBuffer:
             )
             transcript = transcription.text.strip()
 
-            import string
-            clean_text = transcript.lower().translate(str.maketrans("", "", string.punctuation)).strip()
-            hallucinations = ["thank you", "thanks", "yeah", "okay", "you", "bye"]
-            
-            if clean_text in hallucinations and len(pcm_bytes) < 60000:
+            hallucinations = ["thank you.", "thank you", "thanks.", "yeah.", "okay.", "you.", "bye."]
+            if transcript.lower() in hallucinations and len(pcm_bytes) < 60000:
                 logger.info("Filtered likely Whisper hallucination.")
                 return
 

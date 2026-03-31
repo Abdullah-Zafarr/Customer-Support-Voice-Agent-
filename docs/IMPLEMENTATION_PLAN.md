@@ -6,7 +6,7 @@ This guide breaks down how to build an ultra-fast AI Customer Support Voice Agen
 
 ## 🏗️ How it Works (The Pipeline)
 1. **Hear:** Microphone Audio ➡️ Transcribed to Text via **Faster-Whisper** (Local).
-2. **Think:** Text ➡️ Run through a **Retrieval Engine (RAG)** for company knowledge ➡️ Forwarded to **Groq (Llama 3.3)** for instant reasoning.
+2. **Think:** Text ➡️ Run through a **Retrieval Engine (RAG)** for company knowledge ➡️ Forwarded to **Groq (Llama 3.1 8B Instant)** for instant reasoning.
 3. **Speak:** Text ➡️ Streamed back as natural voice utilizing **Edge-TTS**.
 
 ---
