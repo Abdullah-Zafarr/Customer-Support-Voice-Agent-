@@ -209,6 +209,9 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive()
+            if data.get("type") == "websocket.disconnect":
+                break
+                
             if "bytes" in data:
                 if not agent_speaking:
                     audio_data = data["bytes"]

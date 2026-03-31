@@ -519,7 +519,7 @@ async function startCall() {
                 if (currentState === STATE.SPEAKING) {
                     // Do NOT send audio bytes (prevents echo reaching server STT)
                     // But if user is clearly speaking over agent (loud), signal barge-in
-                    if (rms > 0.025) {
+                    if (rms > 0.25) { // Raised from 0.05 to 0.25 to prevent acoustic echo cancellation loops!
                         ws.send(JSON.stringify({ type: 'barge_in' }));
                         ttsGeneration++;
                         killAudio();

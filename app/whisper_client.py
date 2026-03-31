@@ -38,7 +38,11 @@ class AudioBuffer:
     def _compute_rms(self, pcm_bytes: bytes) -> float:
         if len(pcm_bytes) < 2:
             return 0.0
-        samples = np.frombuffer(pcm_bytes, dtype=np.int16)
+        
+        # Prevent odd-length buffer crashes
+        safe_bytes = pcm_bytes[:len(pcm_bytes) - (len(pcm_bytes) % 2)]
+        samples = np.frombuffer(safe_bytes, dtype=np.int16)
+        
         if len(samples) == 0:
             return 0.0
         return float(np.sqrt(np.mean(samples.astype(np.float32) ** 2)))
@@ -102,8 +106,11 @@ class AudioBuffer:
             )
             transcript = transcription.text.strip()
 
-            hallucinations = ["thank you.", "thank you", "thanks.", "yeah.", "okay.", "you.", "bye."]
-            if transcript.lower() in hallucinations and len(pcm_bytes) < 60000:
+            import string
+            clean_text = transcript.lower().translate(str.maketrans("", "", string.punctuation)).strip()
+            hallucinations = ["thank you", "thanks", "yeah", "okay", "you", "bye"]
+            
+            if clean_text in hallucinations and len(pcm_bytes) < 60000:
                 logger.info("Filtered likely Whisper hallucination.")
                 return
 

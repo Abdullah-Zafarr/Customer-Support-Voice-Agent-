@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soul Imaging — Aether HUD</title>
     <meta name="description" content="Empathetic AI-powered voice assistant for Soul Imaging Clinic.">
+    <link rel="icon" type="image/png" href="/static/logo.png">
 
     <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -54,10 +55,8 @@
     <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
         <header class="bg-soul-navy/60 backdrop-blur-xl border border-white/5 px-6 py-3 rounded-2xl flex items-center justify-between shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-soul-teal to-soul-blue flex items-center justify-center shadow-lg">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                    </svg>
+                <div class="w-9 h-9 rounded-xl overflow-hidden shadow-lg border border-white/10">
+                    <img src="/static/logo.png" alt="Soul Imaging Logo" class="w-full h-full object-cover">
                 </div>
                 <div>
                     <h1 class="font-bold text-base tracking-wide leading-tight text-white">Soul Imaging</h1>
@@ -89,7 +88,7 @@
     </div>
 
     <!-- ═══════════ VIEW 1: VOICE CALL (IMMERSIVE HUD) ═══════════ -->
-    <main id="view-call" class="flex-1 mt-20 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
+    <main id="view-call" class="mt-20 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden" style="height: calc(100vh - 5rem);">
         
         <!-- Left Wing: Stats & Inquiries -->
         <section class="lg:col-span-3 flex flex-col gap-5 order-2 lg:order-1 overflow-y-auto">
@@ -126,7 +125,7 @@
         </section>
 
         <!-- Center Stage: The AI Core Orb -->
-        <section class="lg:col-span-6 flex flex-col justify-center items-center relative order-1 lg:order-2 py-8">
+        <section class="lg:col-span-6 flex flex-col justify-center items-center relative order-1 lg:order-2 py-8 overflow-hidden min-h-0">
             
             <div class="relative flex flex-col items-center">
                 <!-- Outer orbiting ring -->
@@ -179,7 +178,7 @@
         </section>
 
         <!-- Right Wing: Live Logs / Transcript -->
-        <section class="lg:col-span-3 flex flex-col min-h-0 order-3 backdrop-blur-xl">
+        <section class="lg:col-span-3 flex flex-col min-h-0 order-3 backdrop-blur-xl h-full">
             <div class="bg-soul-panel border border-white/3 rounded-2xl p-5 flex flex-col h-full overflow-hidden">
                 <h2 class="text-xs font-bold text-soul-teal uppercase tracking-widest mb-3">Live Feed</h2>
                 <div id="transcript-container" class="flex-1 overflow-y-auto space-y-3 min-h-0 scroll-smooth pr-1 text-xs">

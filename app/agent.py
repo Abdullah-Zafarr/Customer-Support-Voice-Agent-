@@ -12,7 +12,7 @@ from .settings import load_settings
 
 # Initialize AsyncGroq client
 groq_client = AsyncGroq(api_key=settings.GROQ_API_KEY)
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "llama-3.1-8b-instant"
 
 def manage_inquiry_db(name: str, inquiry_type: str, notes: str, ticket_id: Optional[int] = None) -> dict:
     """Create or update a patient inquiry/booking in the database."""
